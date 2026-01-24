@@ -1,0 +1,62 @@
+services:
+  # 1. Database SQL Server
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: pcm-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Password123! 
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - pcm-network
+
+  # 2. Redis Cache
+  redis:
+    image: redis:alpine
+    container_name: pcm-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - pcm-network
+
+  # 3. Backend API
+  backend:
+    build:
+      context: ./PickleballClubManagement
+      dockerfile: PCM.API/Dockerfile
+    container_name: pcm-backend
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=PCM_189_DB_Dev;User Id=sa;Password=Password123!;TrustServerCertificate=True;MultipleActiveResultSets=true
+      - ConnectionStrings__HangfireConnection=Server=sqlserver;Database=PCM_189_Hangfire;User Id=sa;Password=Password123!;TrustServerCertificate=True;MultipleActiveResultSets=true
+      - ConnectionStrings__RedisConnection=redis:6379
+      - ASPNETCORE_URLS=http://+:8080
+    ports:
+      - "5000:8080" 
+    depends_on:
+      - sqlserver
+      - redis
+    networks:
+      - pcm-network
+
+  # 4. Frontend Vue.js
+  frontend:
+    build:
+      context: ./PickleballClubManagement_Frontend
+      dockerfile: Dockerfile
+    container_name: pcm-frontend
+    ports:
+      - "5173:80" 
+    depends_on:
+      - backend
+    networks:
+      - pcm-network
+
+volumes:
+  sqlserver_data:
+
+networks:
+  pcm-network:
+    driver: bridge

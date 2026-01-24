@@ -31,6 +31,7 @@ Hệ thống PCM Pro là giải pháp quản lý toàn diện cho CLB Pickleball
 *   **Background Jobs:** Hangfire (Quét booking treo, tính toán định kỳ)
 *   **Caching:** Redis (Cache cấu hình, Leaderboard)
 *   **Real-time:** SignalR
+*   **Containerization:** Docker
 
 ### Frontend (Vue.js 3)
 *   **Framework:** Vue 3 (Composition API) + Vite
@@ -38,48 +39,71 @@ Hệ thống PCM Pro là giải pháp quản lý toàn diện cho CLB Pickleball
 *   **UI Framework:** Tailwind CSS
 *   **HTTP Client:** Axios
 *   **Router:** Vue Router
+*   **Containerization:** Docker (Nginx)
 
 ---
 
 ## 🚀 Hướng Dẫn Cài Đặt & Chạy Dự Án
 
-### 1. Yêu Cầu Môi Trường
+Bạn có thể chạy dự án theo 2 cách: **Docker Compose (Khuyên dùng)** hoặc **Chạy thủ công**.
+
+### Cách 1: Chạy bằng Docker Compose (Nhanh nhất)
+
+Cách này sẽ tự động khởi tạo toàn bộ môi trường gồm SQL Server, Redis, Backend API và Frontend.
+
+#### 1. Yêu cầu
+*   Cài đặt **Docker Desktop** và đảm bảo nó đang chạy (biểu tượng cá voi đứng yên).
+
+#### 2. Thực hiện
+1.  Mở Terminal tại thư mục gốc của dự án (nơi chứa file `docker-compose.yml`).
+2.  Chạy lệnh sau để build và khởi động các container:
+    ```bash
+    docker-compose up -d --build
+    ```
+3.  Chờ vài phút để quá trình build hoàn tất và các service khởi động.
+
+#### 3. Truy cập
+*   **Frontend (Web App):** http://localhost:5173
+*   **Backend (Swagger UI):** http://localhost:5000/swagger
+*   **Hangfire Dashboard:** http://localhost:5000/hangfire
+
+#### 4. Lưu ý quan trọng khi chạy Docker
+*   **Xung đột cổng:** Đảm bảo bạn đã tắt các service SQL Server (port 1433) hoặc Redis (port 6379) đang chạy trên máy thật trước khi chạy lệnh Docker để tránh lỗi `Bind for 0.0.0.0:xxxx failed: port is already allocated`.
+*   **Dữ liệu:** Dữ liệu SQL Server được lưu trong volume docker `sqlserver_data`.
+
+---
+
+### Cách 2: Chạy Thủ Công (Dành cho Dev/Debug)
+
+#### 1. Yêu Cầu Môi Trường
 *   .NET 8 SDK
 *   Node.js (v18+)
-*   SQL Server
-*   Redis (Khuyến nghị chạy qua Docker: `docker run -d -p 6379:6379 redis`)
+*   SQL Server (Local)
+*   Redis (Local hoặc Docker: `docker run -d -p 6379:6379 redis`)
 
-### 2. Cài Đặt Backend
+#### 2. Cài Đặt Backend
 
 1.  Di chuyển vào thư mục Backend:
     ```bash
     cd PickleballClubManagement
     ```
-2.  Cấu hình chuỗi kết nối trong `PCM.API/appsettings.Development.json` (nếu cần thiết).
-3.  Khôi phục các gói thư viện:
+2.  Cấu hình chuỗi kết nối trong `PCM.API/appsettings.Development.json` nếu cần.
+3.  Khôi phục các gói thư viện và chạy:
     ```bash
     dotnet restore
-    ```
-4.  Chạy Migration và Seeding dữ liệu mẫu (Tự động khi khởi động lần đầu):
-    ```bash
     dotnet run --project PCM.API
     ```
     *   Server sẽ khởi chạy tại: `http://localhost:5000`
-    *   Swagger UI: `http://localhost:5000/swagger`
-    *   Hangfire Dashboard: `http://localhost:5000/hangfire`
 
-### 3. Cài Đặt Frontend
+#### 3. Cài Đặt Frontend
 
 1.  Mở terminal mới và di chuyển vào thư mục Frontend:
     ```bash
     cd PickleballClubManagement_Frontend
     ```
-2.  Cài đặt các thư viện:
+2.  Cài đặt thư viện và chạy:
     ```bash
     npm install
-    ```
-3.  Chạy dự án:
-    ```bash
     npm run dev
     ```
     *   Truy cập ứng dụng tại: `http://localhost:5173`
