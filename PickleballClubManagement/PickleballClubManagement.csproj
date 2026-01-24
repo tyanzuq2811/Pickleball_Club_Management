@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="PCM.Domain/PCM.Domain.csproj" />
+    <ProjectReference Include="PCM.Application/PCM.Application.csproj" />
+    <ProjectReference Include="PCM.Infrastructure/PCM.Infrastructure.csproj" />
+    <ProjectReference Include="PCM.API/PCM.API.csproj" />
+  </ItemGroup>
+
+</Project>
