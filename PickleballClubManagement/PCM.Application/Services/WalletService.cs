@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using PCM.Application.DTOs.Common;
 using PCM.Application.DTOs.Wallet;
 using PCM.Application.Interfaces;
@@ -12,157 +10,130 @@ namespace PCM.Application.Services;
 public class WalletService : IWalletService
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IActivityLogService _activityLogService;
 
-    public WalletService(IUnitOfWork unitOfWork, IActivityLogService activityLogService)
+    public WalletService(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
-        _activityLogService = activityLogService;
     }
 
-    public async Task<ApiResponse<bool>> PayBookingAsync(int memberId, decimal amount, int bookingId)
+    public async Task<ApiResponse<List<WalletTransactionDto>>> GetMemberTransactionsAsync(string userId)
     {
-        try
+        var member = await _unitOfWork.Members.FirstOrDefaultAsync(m => m.UserId == userId);
+        if (member == null) return ApiResponse<List<WalletTransactionDto>>.ErrorResponse("Member not found");
+
+        var transactions = await _unitOfWork.WalletTransactions.FindAsync(t => t.MemberId == member.Id);
+        
+        var dtos = transactions.OrderByDescending(t => t.Date).Select(t => new WalletTransactionDto
         {
-            var member = await _unitOfWork.Members.GetByIdAsync(memberId);
-            if (member == null) return ApiResponse<bool>.ErrorResponse("Member not found");
+            Id = t.Id,
+            Date = t.Date,
+            Amount = t.Amount,
+            Type = t.Type,
+            Description = t.Description ?? "",
+            Status = t.Status,
+            MemberName = member.FullName,
+            CategoryName = "Ví cá nhân" // Tạm thời
+        }).ToList();
 
-            if (member.WalletBalance < amount)
-                return ApiResponse<bool>.ErrorResponse("Insufficient balance");
-
-            // Deduct money
-            member.WalletBalance -= amount;
-            
-            // Log transaction
-            var transaction = new WalletTransaction
-            {
-                MemberId = memberId,
-                Amount = -amount,
-                CategoryId = 2, // Fee
-                Type = WalletTransactionType.PayBooking,
-                Date = DateTime.UtcNow,
-                Description = $"Payment for booking #{bookingId}",
-                Status = TransactionStatus.Success,
-                ReferenceId = bookingId.ToString(),
-                CreatedDate = DateTime.UtcNow
-            };
-
-            transaction.EncryptedSignature = ComputeSignature(transaction);
-            await _unitOfWork.WalletTransactions.AddAsync(transaction);
-            _unitOfWork.Members.Update(member);
-            
-            // SaveChanges commits both operations
-            await _unitOfWork.SaveChangesAsync();
-
-            return ApiResponse<bool>.SuccessResponse(true);
-        }
-        catch (Exception ex)
-        {
-            return ApiResponse<bool>.ErrorResponse(ex.Message);
-        }
+        return ApiResponse<List<WalletTransactionDto>>.SuccessResponse(dtos);
     }
 
-    public async Task<ApiResponse<decimal>> GetBalanceAsync(int memberId)
+    public async Task<ApiResponse<bool>> RequestDepositAsync(string userId, decimal amount)
     {
-        var member = await _unitOfWork.Members.GetByIdAsync(memberId);
-        if (member == null) return ApiResponse<decimal>.ErrorResponse("Member not found");
-        return ApiResponse<decimal>.SuccessResponse(member.WalletBalance);
-    }
+        var member = await _unitOfWork.Members.FirstOrDefaultAsync(m => m.UserId == userId);
+        if (member == null) return ApiResponse<bool>.ErrorResponse("Member not found");
 
-    public async Task<ApiResponse<PagedResult<WalletTransactionDto>>> GetTransactionsAsync(int memberId, int pageNumber, int pageSize)
-    {
-        var transactions = await _unitOfWork.WalletTransactions.FindAsync(t => t.MemberId == memberId);
-        var total = transactions.Count();
-        var items = transactions.OrderByDescending(t => t.Date)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .Select(t => new WalletTransactionDto
-            {
-                Id = t.Id,
-                Date = t.Date,
-                Amount = t.Amount,
-                MemberId = t.MemberId,
-                Type = t.Type,
-                Status = t.Status,
-                Description = t.Description
-            }).ToList();
+        if (amount <= 0) return ApiResponse<bool>.ErrorResponse("Amount must be greater than 0");
 
-        return ApiResponse<PagedResult<WalletTransactionDto>>.SuccessResponse(new PagedResult<WalletTransactionDto>
-        {
-            Items = items,
-            TotalCount = total,
-            PageNumber = pageNumber,
-            PageSize = pageSize
-        });
-    }
-
-    public async Task<ApiResponse<WalletTransactionDto>> CreateDepositRequestAsync(int memberId, DepositRequestDto dto)
-    {
         var transaction = new WalletTransaction
         {
-            MemberId = memberId,
-            Amount = dto.Amount,
-            CategoryId = 1, // Nạp tiền
-            Type = WalletTransactionType.Deposit,
+            MemberId = member.Id,
+            Amount = amount,
             Date = DateTime.UtcNow,
-            Description = dto.Description,
+            Type = WalletTransactionType.Deposit,
             Status = TransactionStatus.Pending,
+            Description = "Nạp tiền vào ví",
+            CategoryId = 1, // Giả sử ID 1 là Nạp tiền
             CreatedDate = DateTime.UtcNow
         };
 
-        transaction.EncryptedSignature = ComputeSignature(transaction);
         await _unitOfWork.WalletTransactions.AddAsync(transaction);
         await _unitOfWork.SaveChangesAsync();
 
-        return ApiResponse<WalletTransactionDto>.SuccessResponse(new WalletTransactionDto
-        {
-            Id = transaction.Id,
-            Amount = transaction.Amount,
-            Status = transaction.Status
-        }, "Deposit request created");
+        return ApiResponse<bool>.SuccessResponse(true, "Deposit request created");
     }
 
-    public async Task<ApiResponse<bool>> ApproveDepositAsync(ApproveDepositDto dto)
+    public async Task<ApiResponse<List<WalletTransactionDto>>> GetPendingDepositsAsync()
     {
-        var transaction = await _unitOfWork.WalletTransactions.GetByIdAsync(dto.TransactionId);
-        if (transaction == null) return ApiResponse<bool>.ErrorResponse("Transaction not found");
+        var transactions = await _unitOfWork.WalletTransactions.FindAsync(t => t.Status == TransactionStatus.Pending && t.Type == WalletTransactionType.Deposit);
         
-        if (transaction.Status != TransactionStatus.Pending)
-            return ApiResponse<bool>.ErrorResponse("Transaction is not pending");
+        // Cần load thông tin Member để hiển thị tên
+        var memberIds = transactions.Select(t => t.MemberId).Distinct().ToList();
+        var members = await _unitOfWork.Members.FindAsync(m => memberIds.Contains(m.Id));
+        var memberDict = members.ToDictionary(m => m.Id, m => m.FullName);
 
-        if (dto.Approve)
+        var dtos = transactions.OrderBy(t => t.Date).Select(t => new WalletTransactionDto
         {
-            transaction.Status = TransactionStatus.Success;
-            transaction.Description += $" | Approved: {dto.Reason}";
-            
-            var member = await _unitOfWork.Members.GetByIdAsync(transaction.MemberId);
-            if (member != null)
-            {
-                member.WalletBalance += transaction.Amount;
-                _unitOfWork.Members.Update(member);
-            }
-            
-            await _activityLogService.LogAsync(member?.UserId ?? "System", "DEPOSIT_APPROVED", $"Deposit {transaction.Amount} approved", "WalletTransaction", transaction.Id);
-        }
-        else
-        {
-            transaction.Status = TransactionStatus.Failed;
-            transaction.Description += $" | Rejected: {dto.Reason}";
-        }
+            Id = t.Id,
+            Date = t.Date,
+            Amount = t.Amount,
+            Type = t.Type,
+            Description = t.Description ?? "",
+            Status = t.Status,
+            MemberName = memberDict.GetValueOrDefault(t.MemberId, "Unknown"),
+            CategoryName = "Nạp tiền"
+        }).ToList();
 
-        // Update signature because status changed (optional depending on business rule, but good for integrity)
-        // transaction.EncryptedSignature = ComputeSignature(transaction); 
-
-        await _unitOfWork.SaveChangesAsync();
-        return ApiResponse<bool>.SuccessResponse(true, dto.Approve ? "Deposit approved" : "Deposit rejected");
+        return ApiResponse<List<WalletTransactionDto>>.SuccessResponse(dtos);
     }
 
-    private string ComputeSignature(WalletTransaction transaction)
+    public async Task<ApiResponse<bool>> ApproveDepositAsync(int id)
     {
-        var rawData = $"{transaction.MemberId}-{transaction.Amount}-{transaction.Date:O}-{transaction.Type}-{transaction.ReferenceId}";
-        using var sha256 = SHA256.Create();
-        var bytes = Encoding.UTF8.GetBytes(rawData);
-        var hash = sha256.ComputeHash(bytes);
-        return Convert.ToBase64String(hash);
+        var transaction = await _unitOfWork.WalletTransactions.GetByIdAsync(id);
+        if (transaction == null) return ApiResponse<bool>.ErrorResponse("Transaction not found");
+        if (transaction.Status != TransactionStatus.Pending) return ApiResponse<bool>.ErrorResponse("Transaction is not pending");
+
+        transaction.Status = TransactionStatus.Success;
+        var member = await _unitOfWork.Members.GetByIdAsync(transaction.MemberId);
+        if (member != null)
+        {
+            member.WalletBalance += transaction.Amount;
+            _unitOfWork.Members.Update(member);
+        }
+
+        _unitOfWork.WalletTransactions.Update(transaction);
+        await _unitOfWork.SaveChangesAsync();
+
+        return ApiResponse<bool>.SuccessResponse(true, "Deposit approved");
+    }
+
+    public async Task<ApiResponse<bool>> PayBookingAsync(int memberId, decimal amount, string bookingReference)
+    {
+        var member = await _unitOfWork.Members.GetByIdAsync(memberId);
+        if (member == null) return ApiResponse<bool>.ErrorResponse("Member not found");
+
+        if (member.WalletBalance < amount)
+            return ApiResponse<bool>.ErrorResponse("Số dư không đủ để thanh toán");
+
+        member.WalletBalance -= amount;
+        _unitOfWork.Members.Update(member);
+
+        var transaction = new WalletTransaction
+        {
+            MemberId = member.Id,
+            Amount = -amount,
+            Date = DateTime.UtcNow,
+            Type = WalletTransactionType.PayBooking,
+            Status = TransactionStatus.Success,
+            Description = $"Thanh toán đặt sân {bookingReference}",
+            ReferenceId = bookingReference,
+            CategoryId = 2, // Phí sân
+            CreatedDate = DateTime.UtcNow
+        };
+
+        await _unitOfWork.WalletTransactions.AddAsync(transaction);
+        await _unitOfWork.SaveChangesAsync();
+
+        return ApiResponse<bool>.SuccessResponse(true, "Thanh toán thành công");
     }
 }

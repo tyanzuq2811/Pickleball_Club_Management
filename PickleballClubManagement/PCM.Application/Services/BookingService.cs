@@ -66,7 +66,7 @@ public class BookingService : IBookingService
             await _unitOfWork.Bookings.AddAsync(booking);
             
             // 5. Auto Payment
-            var paymentResult = await _walletService.PayBookingAsync(memberId, price, booking.Id);
+            var paymentResult = await _walletService.PayBookingAsync(memberId, price, booking.Id.ToString());
             if (!paymentResult.Success)
             {
                 return ApiResponse<BookingDto>.ErrorResponse($"Insufficient wallet balance: {paymentResult.Message}");

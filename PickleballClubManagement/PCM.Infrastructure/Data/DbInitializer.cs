@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using PCM.Domain.Entities;
 using PCM.Domain.Enums;
 
@@ -7,13 +8,14 @@ namespace PCM.Infrastructure.Data;
 
 public static class DbInitializer
 {
-    public static async Task InitializeAsync(
-        ApplicationDbContext context,
-        UserManager<IdentityUser> userManager,
-        RoleManager<IdentityRole> roleManager)
+    public static async Task Initialize(IServiceProvider serviceProvider)
     {
+        var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
+        var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
         // Tạo database nếu chưa có
-        await context.Database.MigrateAsync();
+        context.Database.Migrate();
 
         // Seed Roles
         string[] roles = { "Admin", "Treasurer", "Referee", "Member" };
@@ -57,20 +59,60 @@ public static class DbInitializer
             context.Members.Add(adminMember);
         }
 
-        // Seed Sample Members
-        if (!await context.Members.AnyAsync(m => m.Email != adminEmail))
+        // Seed Treasurer (Thủ quỹ)
+        var treasurerEmail = "treasurer@pcm.com";
+        if (await userManager.FindByEmailAsync(treasurerEmail) == null)
         {
-            var sampleMembers = new List<(string Name, string Email, double Rank)>
-            {
-                ("Nguyễn Văn A", "nguyenvana@pcm.com", 1300),
-                ("Trần Thị B", "tranthib@pcm.com", 1250),
-                ("Lê Văn C", "levanc@pcm.com", 1400),
-                ("Phạm Thị D", "phamthid@pcm.com", 1350),
-                ("Hoàng Văn E", "hoangvane@pcm.com", 1200),
-                ("Vũ Thị F", "vuthif@pcm.com", 1280)
-            };
+            var user = new IdentityUser { UserName = treasurerEmail, Email = treasurerEmail, EmailConfirmed = true };
+            await userManager.CreateAsync(user, "Treasurer@123");
+            await userManager.AddToRoleAsync(user, "Treasurer");
 
-            foreach (var (name, email, rank) in sampleMembers)
+            context.Members.Add(new Member
+            {
+                UserId = user.Id,
+                FullName = "Thủ Quỹ CLB",
+                Email = treasurerEmail,
+                JoinDate = DateTime.UtcNow,
+                IsActive = true,
+                RankELO = 1200
+            });
+        }
+
+        // Seed Referee (Trọng tài)
+        var refereeEmail = "referee@pcm.com";
+        if (await userManager.FindByEmailAsync(refereeEmail) == null)
+        {
+            var user = new IdentityUser { UserName = refereeEmail, Email = refereeEmail, EmailConfirmed = true };
+            await userManager.CreateAsync(user, "Referee@123");
+            await userManager.AddToRoleAsync(user, "Referee");
+
+            context.Members.Add(new Member
+            {
+                UserId = user.Id,
+                FullName = "Trọng Tài Chính",
+                Email = refereeEmail,
+                JoinDate = DateTime.UtcNow,
+                IsActive = true,
+                RankELO = 1200
+            });
+        }
+
+        // Seed Sample Members
+        var sampleMembers = new List<(string Name, string Email, double Rank)>
+        {
+            ("Hội Viên 1", "member1@pcm.com", 1200),
+            ("Nguyễn Văn A", "nguyenvana@pcm.com", 1300),
+            ("Trần Thị B", "tranthib@pcm.com", 1250),
+            ("Lê Văn C", "levanc@pcm.com", 1400),
+            ("Phạm Thị D", "phamthid@pcm.com", 1350),
+            ("Hoàng Văn E", "hoangvane@pcm.com", 1200),
+            ("Vũ Thị F", "vuthif@pcm.com", 1280)
+        };
+
+        var random = new Random();
+        foreach (var (name, email, rank) in sampleMembers)
+        {
+            if (await userManager.FindByEmailAsync(email) == null)
             {
                 var user = new IdentityUser
                 {
@@ -79,23 +121,26 @@ public static class DbInitializer
                     EmailConfirmed = true
                 };
                 
-                await userManager.CreateAsync(user, "Member@123");
-                await userManager.AddToRoleAsync(user, "Member");
-
-                var member = new Member
+                var result = await userManager.CreateAsync(user, "Member@123");
+                if (result.Succeeded)
                 {
-                    UserId = user.Id,
-                    FullName = name,
-                    Email = email,
-                    PhoneNumber = $"09{new Random().Next(10000000, 99999999)}",
-                    DateOfBirth = DateTime.UtcNow.AddYears(-new Random().Next(20, 40)),
-                    JoinDate = DateTime.UtcNow.AddMonths(-new Random().Next(1, 12)),
-                    RankELO = rank,
-                    WalletBalance = 500000,
-                    IsActive = true
-                };
-                
-                context.Members.Add(member);
+                    await userManager.AddToRoleAsync(user, "Member");
+
+                    var member = new Member
+                    {
+                        UserId = user.Id,
+                        FullName = name,
+                        Email = email,
+                        PhoneNumber = $"09{random.Next(10000000, 99999999)}",
+                        DateOfBirth = DateTime.UtcNow.AddYears(-random.Next(20, 40)),
+                        JoinDate = DateTime.UtcNow.AddMonths(-random.Next(1, 12)),
+                        RankELO = rank,
+                        WalletBalance = 500000,
+                        IsActive = true
+                    };
+                    
+                    context.Members.Add(member);
+                }
             }
         }
 

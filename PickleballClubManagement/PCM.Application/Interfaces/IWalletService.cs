@@ -5,9 +5,9 @@ namespace PCM.Application.Interfaces;
 
 public interface IWalletService
 {
-    Task<ApiResponse<bool>> PayBookingAsync(int memberId, decimal amount, int bookingId);
-    Task<ApiResponse<decimal>> GetBalanceAsync(int memberId);
-    Task<ApiResponse<PagedResult<WalletTransactionDto>>> GetTransactionsAsync(int memberId, int pageNumber, int pageSize);
-    Task<ApiResponse<WalletTransactionDto>> CreateDepositRequestAsync(int memberId, DepositRequestDto dto);
-    Task<ApiResponse<bool>> ApproveDepositAsync(ApproveDepositDto dto);
+    Task<ApiResponse<List<WalletTransactionDto>>> GetMemberTransactionsAsync(string userId);
+    Task<ApiResponse<bool>> RequestDepositAsync(string userId, decimal amount);
+    Task<ApiResponse<List<WalletTransactionDto>>> GetPendingDepositsAsync();
+    Task<ApiResponse<bool>> ApproveDepositAsync(int id);
+    Task<ApiResponse<bool>> PayBookingAsync(int memberId, decimal amount, string bookingReference);
 }

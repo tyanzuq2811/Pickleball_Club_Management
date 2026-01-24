@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PCM.Application.DTOs.Common;
 using PCM.Application.DTOs.Wallet;
 using PCM.Application.Interfaces;
+using System.Security.Claims;
 
 namespace PCM.API.Controllers;
 
@@ -18,32 +19,39 @@ public class WalletController : ControllerBase
         _walletService = walletService;
     }
 
-    [HttpGet("balance/{memberId}")]
-    public async Task<ActionResult<ApiResponse<decimal>>> GetBalance(int memberId)
+    [HttpGet("transactions")]
+    public async Task<ActionResult<ApiResponse<List<WalletTransactionDto>>>> GetMyTransactions()
     {
-        var result = await _walletService.GetBalanceAsync(memberId);
-        return result.Success ? Ok(result) : BadRequest(result);
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+        
+        var result = await _walletService.GetMemberTransactionsAsync(userId);
+        return Ok(result);
     }
 
-    [HttpGet("transactions/{memberId}")]
-    public async Task<ActionResult<ApiResponse<PagedResult<WalletTransactionDto>>>> GetTransactions(int memberId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    [HttpPost("deposit")]
+    public async Task<ActionResult<ApiResponse<bool>>> RequestDeposit([FromBody] DepositRequestDto request)
     {
-        var result = await _walletService.GetTransactionsAsync(memberId, pageNumber, pageSize);
-        return result.Success ? Ok(result) : BadRequest(result);
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var result = await _walletService.RequestDepositAsync(userId, request.Amount);
+        return Ok(result);
     }
 
-    [HttpPost("deposit/{memberId}")]
-    public async Task<ActionResult<ApiResponse<WalletTransactionDto>>> CreateDepositRequest(int memberId, [FromBody] DepositRequestDto dto)
-    {
-        var result = await _walletService.CreateDepositRequestAsync(memberId, dto);
-        return result.Success ? Ok(result) : BadRequest(result);
-    }
-
-    [HttpPost("approve-deposit")]
+    [HttpGet("pending")]
     [Authorize(Roles = "Admin,Treasurer")]
-    public async Task<ActionResult<ApiResponse<bool>>> ApproveDeposit([FromBody] ApproveDepositDto dto)
+    public async Task<ActionResult<ApiResponse<List<WalletTransactionDto>>>> GetPendingDeposits()
     {
-        var result = await _walletService.ApproveDepositAsync(dto);
-        return result.Success ? Ok(result) : BadRequest(result);
+        var result = await _walletService.GetPendingDepositsAsync();
+        return Ok(result);
+    }
+
+    [HttpPost("approve/{id}")]
+    [Authorize(Roles = "Admin,Treasurer")]
+    public async Task<ActionResult<ApiResponse<bool>>> ApproveDeposit(int id)
+    {
+        var result = await _walletService.ApproveDepositAsync(id);
+        return Ok(result);
     }
 }

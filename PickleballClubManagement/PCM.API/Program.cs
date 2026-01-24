@@ -143,7 +143,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowVueApp");
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -159,10 +159,7 @@ Console.WriteLine("HangfireConnection: " + builder.Configuration.GetConnectionSt
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<ApplicationDbContext>();
-    var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-    await DbInitializer.InitializeAsync(context, userManager, roleManager);
+    await DbInitializer.Initialize(services);
 }
 
 // Configure Hangfire Jobs

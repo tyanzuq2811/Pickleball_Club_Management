@@ -1,4 +1,5 @@
 using PCM.Application.DTOs.Common;
+using PCM.Application.DTOs.Matches;
 using PCM.Application.DTOs.Tournaments;
 using PCM.Application.Interfaces;
 using PCM.Domain.Entities;
@@ -476,5 +477,41 @@ public class TournamentService : ITournamentService
             TournamentId = tournamentId, 
             Rounds = rounds 
         });
+    }
+
+    public async Task<ApiResponse<List<MatchDto>>> GetAllMatchesAsync()
+    {
+        var matches = await _unitOfWork.Matches.GetAllAsync();
+        
+        // Load members info for names
+        var memberIds = matches.SelectMany(m => new[] { m.Team1_Player1Id, m.Team2_Player1Id, m.Team1_Player2Id, m.Team2_Player2Id })
+                               .Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
+        var members = await _unitOfWork.Members.FindAsync(m => memberIds.Contains(m.Id));
+        var memberDict = members.ToDictionary(m => m.Id, m => m.FullName);
+
+        var dtos = new List<MatchDto>();
+        foreach (var m in matches.OrderByDescending(x => x.Date))
+        {
+            // Tính tổng điểm hiện tại từ MatchScores
+            var scores = await _unitOfWork.MatchScores.FindAsync(s => s.MatchId == m.Id);
+            var t1Score = scores.Sum(s => s.Team1Score); // Hoặc logic tính set thắng
+            var t2Score = scores.Sum(s => s.Team2Score);
+
+            string t1Name = m.Team1_Player1Id.HasValue ? memberDict.GetValueOrDefault(m.Team1_Player1Id.Value, "TBD") : "TBD";
+            string t2Name = m.Team2_Player1Id.HasValue ? memberDict.GetValueOrDefault(m.Team2_Player1Id.Value, "TBD") : "TBD";
+
+            dtos.Add(new MatchDto
+            {
+                Id = m.Id,
+                Team1Name = t1Name,
+                Team2Name = t2Name,
+                Team1Score = t1Score,
+                Team2Score = t2Score,
+                Status = m.WinningSide != WinningSide.None ? "Finished" : "Ongoing",
+                Date = m.Date
+            });
+        }
+
+        return ApiResponse<List<MatchDto>>.SuccessResponse(dtos);
     }
 }
