@@ -289,9 +289,16 @@ public class TournamentService : ITournamentService
                     _unitOfWork.Members.Update(p2);
 
                     // Cập nhật Redis Leaderboard
-                    await _redisService.SortedSetAddAsync("leaderboard:elo", p1.Id.ToString(), p1.RankELO);
-                    await _redisService.SortedSetAddAsync("leaderboard:elo", p2.Id.ToString(), p2.RankELO);
-                    await _redisService.DeleteAsync("leaderboard:top:10"); // Xóa cache top ranking cũ
+                    try
+                    {
+                        await _redisService.SortedSetAddAsync("leaderboard:elo", p1.Id.ToString(), p1.RankELO);
+                        await _redisService.SortedSetAddAsync("leaderboard:elo", p2.Id.ToString(), p2.RankELO);
+                        await _redisService.DeleteAsync("leaderboard:top:10"); // Xóa cache top ranking cũ
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Redis update failed: {ex.Message}");
+                    }
                 }
             }
 

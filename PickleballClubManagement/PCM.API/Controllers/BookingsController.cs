@@ -38,16 +38,37 @@ public class BookingsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ApiResponse<BookingDto>>> CreateBooking([FromBody] BookingCreateDto dto)
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized();
-        
-        var member = await _memberService.GetByUserIdAsync(userId);
-        if (member?.Data == null)
-            return Unauthorized(ApiResponse<BookingDto>.ErrorResponse("Không tìm thấy thông tin thành viên"));
+        try
+        {
+            Console.WriteLine($"[BookingsController] Received booking request: CourtId={dto.CourtId}, Start={dto.StartTime}, End={dto.EndTime}");
+            
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            Console.WriteLine($"[BookingsController] UserId from token: {userId}");
+            
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+            
+            var member = await _memberService.GetByUserIdAsync(userId);
+            Console.WriteLine($"[BookingsController] Member lookup result: Success={member?.Success}, Data={member?.Data?.Id}");
+            
+            if (member?.Data == null)
+            {
+                Console.WriteLine($"[BookingsController] ERROR: Member not found for UserId={userId}");
+                return BadRequest(ApiResponse<BookingDto>.ErrorResponse("Không tìm thấy thông tin thành viên"));
+            }
 
-        var result = await _bookingService.CreateAsync(dto, member.Data.Id);
-        return result.Success ? Ok(result) : BadRequest(result);
+            Console.WriteLine($"[BookingsController] Calling BookingService.CreateAsync with MemberId={member.Data.Id}");
+            var result = await _bookingService.CreateAsync(dto, member.Data.Id);
+            Console.WriteLine($"[BookingsController] BookingService result: Success={result.Success}, Message={result.Message}");
+            
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[BookingsController] EXCEPTION: {ex.Message}");
+            Console.WriteLine($"[BookingsController] StackTrace: {ex.StackTrace}");
+            return BadRequest(ApiResponse<BookingDto>.ErrorResponse($"Lỗi hệ thống: {ex.Message}"));
+        }
     }
 
     [HttpPost("recurring")]

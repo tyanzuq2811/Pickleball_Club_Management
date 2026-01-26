@@ -18,6 +18,9 @@ public class Court
     [MaxLength(500)]
     public string? Description { get; set; }
 
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal PricePerHour { get; set; } = 100000;
+
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
     // Navigation properties

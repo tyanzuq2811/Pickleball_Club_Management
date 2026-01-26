@@ -13,6 +13,9 @@ public class News
     [MaxLength(500)]
     public string Title { get; set; } = string.Empty;
 
+    [MaxLength(1000)]
+    public string? Summary { get; set; }
+
     [Required]
     public string Content { get; set; } = string.Empty;
 

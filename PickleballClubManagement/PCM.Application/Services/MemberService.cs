@@ -135,11 +135,18 @@ public class MemberService : IMemberService
         try
         {
             // Try to get from Redis cache first
-            var cacheKey = $"leaderboard:top:{limit}";
-            var cachedRanking = await _redisService.GetAsync<List<MemberRankingDto>>(cacheKey);
+            try
+            {
+                var cacheKey = $"leaderboard:top:{limit}";
+                var cachedRanking = await _redisService.GetAsync<List<MemberRankingDto>>(cacheKey);
 
-            if (cachedRanking != null && cachedRanking.Any())
-                return ApiResponse<List<MemberRankingDto>>.SuccessResponse(cachedRanking);
+                if (cachedRanking != null && cachedRanking.Any())
+                    return ApiResponse<List<MemberRankingDto>>.SuccessResponse(cachedRanking);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Redis cache read failed: {ex.Message}");
+            }
 
             // If not in cache, get from database
             var members = await _unitOfWork.Members.GetAllAsync();
@@ -161,12 +168,20 @@ public class MemberService : IMemberService
                 .ToList();
 
             // Cache for 5 minutes
-            await _redisService.SetAsync(cacheKey, ranking, TimeSpan.FromMinutes(5));
-
-            // Also update Redis Sorted Set for leaderboard
-            foreach (var item in ranking)
+            try
             {
-                await _redisService.SortedSetAddAsync("leaderboard:elo", item.MemberId.ToString(), item.RankELO);
+                var cacheKey = $"leaderboard:top:{limit}";
+                await _redisService.SetAsync(cacheKey, ranking, TimeSpan.FromMinutes(5));
+
+                // Also update Redis Sorted Set for leaderboard
+                foreach (var item in ranking)
+                {
+                    await _redisService.SortedSetAddAsync("leaderboard:elo", item.MemberId.ToString(), item.RankELO);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Redis cache write failed: {ex.Message}");
             }
 
             return ApiResponse<List<MemberRankingDto>>.SuccessResponse(ranking);
@@ -244,10 +259,15 @@ public class MemberService : IMemberService
             await _unitOfWork.SaveChangesAsync();
 
             // Update Redis leaderboard
-            await _redisService.SortedSetAddAsync("leaderboard:elo", memberId.ToString(), member.RankELO);
-            
-            // Invalidate cache
-            await _redisService.DeleteAsync("leaderboard:top:10");
+            try
+            {
+                await _redisService.SortedSetAddAsync("leaderboard:elo", memberId.ToString(), member.RankELO);
+                await _redisService.DeleteAsync("leaderboard:top:10");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Redis update failed: {ex.Message}");
+            }
 
             return ApiResponse<bool>.SuccessResponse(true, "Rank ELO updated successfully");
         }

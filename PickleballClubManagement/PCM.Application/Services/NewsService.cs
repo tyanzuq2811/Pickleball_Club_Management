@@ -51,9 +51,16 @@ public class NewsService : INewsService
 
     public async Task<ApiResponse<List<NewsDto>>> GetPinnedAsync()
     {
-        // Cache Strategy
-        var cached = await _redisService.GetAsync<List<NewsDto>>(PinnedNewsCacheKey);
-        if (cached != null) return ApiResponse<List<NewsDto>>.SuccessResponse(cached);
+        try
+        {
+            // Cache Strategy
+            var cached = await _redisService.GetAsync<List<NewsDto>>(PinnedNewsCacheKey);
+            if (cached != null) return ApiResponse<List<NewsDto>>.SuccessResponse(cached);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Redis cache read failed: {ex.Message}");
+        }
 
         var list = await _unitOfWork.News.FindAsync(n => n.IsPinned);
         var dtos = list.OrderByDescending(n => n.CreatedDate)
@@ -63,7 +70,15 @@ public class NewsService : INewsService
                 IsPinned = n.IsPinned, CreatedDate = n.CreatedDate, CreatedBy = n.CreatedBy 
             }).ToList();
 
-        await _redisService.SetAsync(PinnedNewsCacheKey, dtos, TimeSpan.FromMinutes(30));
+        try
+        {
+            await _redisService.SetAsync(PinnedNewsCacheKey, dtos, TimeSpan.FromMinutes(30));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Redis cache write failed: {ex.Message}");
+        }
+        
         return ApiResponse<List<NewsDto>>.SuccessResponse(dtos);
     }
 
@@ -73,7 +88,11 @@ public class NewsService : INewsService
         await _unitOfWork.News.AddAsync(news);
         await _unitOfWork.SaveChangesAsync();
         
-        if (dto.IsPinned) await _redisService.DeleteAsync(PinnedNewsCacheKey);
+        if (dto.IsPinned)
+        {
+            try { await _redisService.DeleteAsync(PinnedNewsCacheKey); }
+            catch { /* Ignore Redis errors */ }
+        }
 
         return ApiResponse<NewsDto>.SuccessResponse(new NewsDto { Id = news.Id, Title = news.Title }, "News created");
     }
@@ -89,7 +108,8 @@ public class NewsService : INewsService
         news.ModifiedDate = DateTime.UtcNow;
 
         await _unitOfWork.SaveChangesAsync();
-        await _redisService.DeleteAsync(PinnedNewsCacheKey);
+        try { await _redisService.DeleteAsync(PinnedNewsCacheKey); }
+        catch { /* Ignore Redis errors */ }
         return await GetByIdAsync(id);
     }
 
@@ -100,7 +120,8 @@ public class NewsService : INewsService
         
         _unitOfWork.News.Remove(news);
         await _unitOfWork.SaveChangesAsync();
-        await _redisService.DeleteAsync(PinnedNewsCacheKey);
+        try { await _redisService.DeleteAsync(PinnedNewsCacheKey); }
+        catch { /* Ignore Redis errors */ }
         
         return ApiResponse<bool>.SuccessResponse(true, "News deleted");
     }

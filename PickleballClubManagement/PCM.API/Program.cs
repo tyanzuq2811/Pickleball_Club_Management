@@ -28,8 +28,21 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
 // 3. Redis
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
-    var configuration = builder.Configuration.GetConnectionString("RedisConnection") ?? "localhost:6379";
-    return ConnectionMultiplexer.Connect(configuration);
+    try
+    {
+        var configuration = builder.Configuration.GetConnectionString("RedisConnection") ?? "localhost:6379";
+        var options = ConfigurationOptions.Parse(configuration);
+        options.AbortOnConnectFail = false; // Không crash nếu Redis chưa chạy
+        options.ConnectTimeout = 5000;
+        return ConnectionMultiplexer.Connect(options);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Warning: Could not connect to Redis: {ex.Message}");
+        Console.WriteLine("Application will continue without Redis caching.");
+        // Return a dummy multiplexer để app không crash
+        return ConnectionMultiplexer.Connect("localhost:6379,abortConnect=false,connectTimeout=1");
+    }
 });
 
 // 4. Hangfire
@@ -96,6 +109,10 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
+// 8. SignalR
+builder.Services.AddSignalR();
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "PCM API", Version = "v1" });
@@ -151,6 +168,9 @@ app.UseAuthorization();
 app.UseHangfireDashboard();
 
 app.MapControllers();
+
+// Map SignalR Hubs
+app.MapHub<PCM.API.Hubs.ScoreboardHub>("/hubs/scoreboard");
 
 // Debug: In giá trị HangfireConnection
 Console.WriteLine("HangfireConnection: " + builder.Configuration.GetConnectionString("HangfireConnection"));
