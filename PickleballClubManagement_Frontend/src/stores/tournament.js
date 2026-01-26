@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import axiosClient from '@/api/axiosClient';
+import { useToast } from "vue-toastification";
 
 export const useTournamentStore = defineStore('tournament', {
     state: () => ({
@@ -33,6 +34,26 @@ export const useTournamentStore = defineStore('tournament', {
             } catch (error) {
                 console.error(error);
                 this.currentBracket = null;
+            } finally {
+                this.loading = false;
+            }
+        },
+        async createTournament(tournamentData) {
+            const toast = useToast();
+            this.loading = true;
+            try {
+                const response = await axiosClient.post('/tournaments', tournamentData);
+                if (response.data.success) {
+                    toast.success("Tạo giải đấu thành công!");
+                    return true;
+                } else {
+                    toast.error(response.data.message || "Tạo giải đấu thất bại");
+                    return false;
+                }
+            } catch (error) {
+                console.error(error);
+                toast.error(error.response?.data?.message || "Lỗi khi tạo giải đấu");
+                return false;
             } finally {
                 this.loading = false;
             }

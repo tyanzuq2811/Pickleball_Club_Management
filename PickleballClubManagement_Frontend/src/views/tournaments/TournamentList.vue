@@ -2,8 +2,8 @@
   <div class="space-y-6">
     <div class="flex justify-between items-center">
       <h2 class="text-2xl font-bold text-slate-800">Danh sách Giải đấu</h2>
-      <button class="btn-primary">
-        Tạo giải đấu
+      <button @click="showCreateModal = true" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">
+        + Tạo giải đấu
       </button>
     </div>
 
@@ -44,20 +44,140 @@
         </div>
       </div>
     </div>
+
+    <!-- Create Tournament Modal -->
+    <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+          <h3 class="text-xl font-bold text-slate-800 mb-6">Tạo Giải Đấu Mới</h3>
+          
+          <form @submit.prevent="handleCreateTournament" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Tên giải đấu</label>
+              <input v-model="newTournament.title" type="text" required
+                     class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Mô tả</label>
+              <textarea v-model="newTournament.description" rows="3"
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Ngày bắt đầu</label>
+                <input v-model="newTournament.startDate" type="date" required
+                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Ngày kết thúc</label>
+                <input v-model="newTournament.endDate" type="date" required
+                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Phí tham gia</label>
+                <input v-model.number="newTournament.entryFee" type="number" min="0" required
+                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Giải thưởng</label>
+                <input v-model.number="newTournament.prizePool" type="number" min="0" required
+                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Số người tối đa</label>
+                <input v-model.number="newTournament.maxParticipants" type="number" min="4" required
+                       class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Loại giải</label>
+                <select v-model.number="newTournament.type" required
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                  <option :value="0">Loại trực tiếp</option>
+                  <option :value="1">Vòng tròn</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Chế độ chơi</label>
+              <select v-model.number="newTournament.gameMode" required
+                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                <option :value="0">Đơn</option>
+                <option :value="1">Đôi</option>
+              </select>
+            </div>
+
+            <div class="flex space-x-3 pt-4">
+              <button type="button" @click="closeModal"
+                      class="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium">
+                Hủy
+              </button>
+              <button type="submit" :disabled="tournamentStore.loading"
+                      class="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium disabled:opacity-50">
+                {{ tournamentStore.loading ? 'Đang tạo...' : 'Tạo giải đấu' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useTournamentStore } from '@/stores/tournament';
 import { TrophyIcon, CalendarIcon, CurrencyDollarIcon } from '@heroicons/vue/24/outline';
 import { format } from 'date-fns';
 
 const tournamentStore = useTournamentStore();
+const showCreateModal = ref(false);
+const newTournament = ref({
+  title: '',
+  description: '',
+  startDate: '',
+  endDate: '',
+  entryFee: 50000,
+  prizePool: 500000,
+  maxParticipants: 16,
+  type: 0,
+  gameMode: 0
+});
 
 onMounted(() => {
   tournamentStore.fetchTournaments();
 });
+
+const handleCreateTournament = async () => {
+  const success = await tournamentStore.createTournament(newTournament.value);
+  if (success) {
+    closeModal();
+    tournamentStore.fetchTournaments();
+  }
+};
+
+const closeModal = () => {
+  showCreateModal.value = false;
+  newTournament.value = {
+    title: '',
+    description: '',
+    startDate: '',
+    endDate: '',
+    entryFee: 50000,
+    prizePool: 500000,
+    maxParticipants: 16,
+    type: 0,
+    gameMode: 0
+  };
+};
 
 const formatDate = (date) => date ? format(new Date(date), 'dd/MM/yyyy') : 'Chưa xác định';
 const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);

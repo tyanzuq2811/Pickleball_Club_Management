@@ -159,12 +159,23 @@ const handleSlotClick = async (date, hour) => {
     const startTime = addHours(startOfDay(date), hour);
     const endTime = addHours(startTime, 1); // Mặc định 1 tiếng
 
+    console.log('Booking request:', {
+      courtId: selectedCourtId.value,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString()
+    });
+
     const success = await bookingStore.createBooking({
       courtId: selectedCourtId.value,
       startTime: startTime.toISOString(),
       endTime: endTime.toISOString(),
       notes: "Đặt nhanh từ lịch"
     });
+
+    // Log bookings sau khi fetch lại
+    if (success) {
+      console.log('Bookings after create:', bookingStore.bookings);
+    }
   }
 };
 </script>
