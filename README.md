@@ -15,6 +15,11 @@ Hệ thống PCM Pro là giải pháp quản lý toàn diện cho CLB Pickleball
 #### 🏃 Quản lý Hội viên & Xác thực
 *   **Đăng ký/Đăng nhập:** JWT Authentication với Identity Framework
 *   **Phân quyền:** 4 roles (Admin, Treasurer, Referee, Member) với middleware authorization
+*   **Dashboard theo vai trò:** Mỗi role có dashboard riêng với thông tin phù hợp
+    *   **Admin Dashboard:** Tổng quan hệ thống, quỹ CLB, thành viên, giải đấu, tin tức
+    *   **Treasurer Dashboard:** Quản lý tài chính, thu chi, cảnh báo ngân sách
+    *   **Referee Dashboard:** Quản lý trận đấu, cập nhật tỷ số, lịch trọng tài
+    *   **Member Dashboard:** Thống kê cá nhân, ví, ELO, lịch đặt sân, giải đấu
 *   **Quản lý hồ sơ:** Avatar, thông tin cá nhân, lịch sử thi đấu, ELO ranking
 *   **Thống kê cá nhân:** Win rate, total matches, performance chart
 
@@ -23,6 +28,7 @@ Hệ thống PCM Pro là giải pháp quản lý toàn diện cho CLB Pickleball
 *   **Thanh toán tự động:** Đặt sân tự động trừ tiền ví, rollback nếu thất bại
 *   **Lịch sử giao dịch:** Transaction history với filter theo loại/thời gian
 *   **Bảo mật:** Transaction locking, concurrency handling với RowVersion
+*   **Hiển thị số dư:** Member dashboard hiển thị số dư ví real-time
 
 #### 📅 Đặt sân thông minh (Smart Booking)
 *   **Lịch tuần trực quan:** Calendar view 7 ngày × 17 giờ (6:00-22:00)
@@ -31,6 +37,7 @@ Hệ thống PCM Pro là giải pháp quản lý toàn diện cho CLB Pickleball
 *   **Đặt định kỳ:** Recurring booking theo ngày trong tuần
 *   **Auto-cancel:** Hangfire job tự động hủy booking chưa thanh toán sau 15 phút
 *   **Real-time update:** SignalR broadcast khi có booking mới
+*   **My Bookings:** Member xem lịch đặt sân của mình qua `/api/bookings/my-bookings`
 
 #### 🏆 Hệ thống Giải đấu (Tournament Management)
 *   **Tạo giải đấu:** Single elimination, Round-robin, Singles/Doubles
@@ -39,8 +46,11 @@ Hệ thống PCM Pro là giải pháp quản lý toàn diện cho CLB Pickleball
 *   **Live scoring:** Trọng tài cập nhật tỉ số real-time qua SignalR
 *   **Auto ELO calculation:** Tự động tính điểm ELO sau mỗi trận
 
-#### 📊 Quản lý Tài chính CLB (Treasury)
-*   **Dashboard tài chính:** Tổng thu/chi, biểu đồ dòng tiền
+#### 📊 Quản lý Tài chính CLB (Treasury - Treasurer Only)
+*   **Phân quyền chặt chẽ:** Chỉ Treasurer có quyền quản lý tài chính đầy đủ
+*   **Admin có quyền xem:** Admin có thể xem tổng quan tài chính qua `/api/transactions/summary`
+*   **Dashboard tài chính:** Tổng thu/chi, biểu đồ dòng tiền, cảnh báo ngân sách
+*   **Quản lý danh mục:** CRUD transaction categories tại `/api/transactioncategories`
 *   **Quản lý giao dịch:** CRUD transactions với categories
 *   **Duyệt yêu cầu nạp tiền:** Approval workflow
 *   **Báo cáo:** Export excel, PDF theo tháng/quý/năm
@@ -345,14 +355,14 @@ PickleballClubManagement/
 
 ### Test Accounts (Seeded Data)
 
-Tất cả tài khoản đều có **ví điện tử** đã được nạp sẵn để test.
+Tất cả tài khoản đều có **ví điện tử** đã được nạp sẵn để test. Mỗi role có **dashboard riêng** với thông tin phù hợp.
 
-| Role | Email | Password | Wallet Balance | Test Cases |
-|------|-------|----------|----------------|------------|
-| **Admin** | admin@pcm.com | Admin@123 | ₫0 | Quản lý sân, tin tức, thành viên, giải đấu |
-| **Treasurer** | treasurer@pcm.com | Treasurer@123 | ₫0 | Duyệt nạp tiền, xem báo cáo tài chính, quản lý giao dịch |
-| **Referee** | referee@pcm.com | Referee@123 | ₫0 | Cập nhật tỉ số, quản lý trận đấu |
-| **Member** | member1@pcm.com | Member@123 | ₫500,000 | Đặt sân, nạp tiền, tham gia giải, xem ELO |
+| Role | Email | Password | Wallet Balance | Dashboard Features |
+|------|-------|----------|----------------|--------------------|
+| **Admin** | admin@pcm.com | Admin@123 | ₫0 | Tổng quan hệ thống, quỹ CLB (xem), thành viên, giải đấu, tin tức |
+| **Treasurer** | treasurer@pcm.com | Treasurer@123 | ₫0 | Quản lý tài chính đầy đủ, thu chi, cảnh báo ngân sách, duyệt nạp tiền |
+| **Referee** | referee@pcm.com | Referee@123 | ₫0 | Quản lý trận đấu, lịch trọng tài hôm nay, cập nhật tỷ số |
+| **Member** | member1@pcm.com | Member@123 | ₫500,000 | Thống kê cá nhân (Ví, ELO, Win Rate), lịch đặt sân, giải đấu |
 | **Member** | nguyenvana@pcm.com | Member@123 | ₫500,000 | Testing user 2 |
 | **Member** | tranthib@pcm.com | Member@123 | ₫500,000 | Testing user 3 |
 
@@ -360,7 +370,11 @@ Tất cả tài khoản đều có **ví điện tử** đã được nạp sẵ
 
 **✅ Authentication & Authorization**
 - [x] Đăng ký thành viên mới → Auto role "Member" + ví ₫0
-- [x] Đăng nhập với mỗi role → Kiểm tra menu hiển thị đúng
+- [x] Đăng nhập với mỗi role → Redirect đến dashboard phù hợp
+- [x] Admin dashboard: Hiển thị stats tổng quan + quỹ CLB
+- [x] Treasurer dashboard: Hiển thị thu chi tháng + recent transactions
+- [x] Referee dashboard: Hiển thị lịch trận hôm nay + stats
+- [x] Member dashboard: Hiển thị ví + ELO + upcoming bookings
 - [x] JWT token expiration → Auto redirect login
 - [x] Unauthorized access → 403 Forbidden
 
@@ -369,11 +383,20 @@ Tất cả tài khoản đều có **ví điện tử** đã được nạp sẵ
 - [x] Đặt sân trùng lịch → 400 Bad Request
 - [x] Đặt sân với ví không đủ tiền → 400 Error
 - [x] Hangfire auto-cancel booking chưa thanh toán sau 15 phút
+- [x] Member xem lịch đặt sân của mình qua `/api/bookings/my-bookings`
 
 **✅ Wallet & Transactions**
 - [x] Member nạp tiền → Status "Pending" → Treasurer duyệt → Cập nhật số dư
 - [x] Thanh toán booking → Tạo WalletTransaction type "Payment"
 - [x] Xem lịch sử giao dịch → Pagination + Filter
+- [x] Member dashboard hiển thị số dư ví từ `/api/members/me`
+
+**✅ Treasury Management (Treasurer Only)**
+- [x] Chỉ Treasurer có quyền CRUD transactions
+- [x] Chỉ Treasurer có quyền CRUD transaction categories
+- [x] Admin có quyền xem `/api/transactions/summary` cho dashboard
+- [x] Navigation menu "Tài chính" chỉ hiện với Treasurer
+- [x] Direct URL access → 403 nếu không phải Treasurer
 
 **✅ Tournament System**
 - [x] Admin tạo giải → Single Elimination 16 người
@@ -450,31 +473,72 @@ POST /api/auth/refresh-token
 GET  /api/auth/me
 ```
 
+**Members**
+```
+GET  /api/members?pageNumber=1&pageSize=10     [Admin, Treasurer]
+GET  /api/members/{id}                         [Authenticated]
+GET  /api/members/me                           [Authenticated]
+GET  /api/members/count                        [Admin, Treasurer]
+GET  /api/members/top-ranking?limit=10         [Public]
+PUT  /api/members/{id}                         [Member own profile or Admin]
+```
+
 **Bookings**
 ```
-GET    /api/bookings?pageNumber=1&pageSize=10
-GET    /api/bookings/{id}
-POST   /api/bookings
-POST   /api/bookings/recurring
-PUT    /api/bookings/{id}
-DELETE /api/bookings/{id}
+GET    /api/bookings?pageNumber=1&pageSize=10  [Admin, Treasurer]
+GET    /api/bookings/{id}                      [Authenticated]
+GET    /api/bookings/my-bookings               [Authenticated]
+POST   /api/bookings                           [Member]
+POST   /api/bookings/recurring                 [Member]
+PUT    /api/bookings/{id}                      [Admin or booking owner]
+DELETE /api/bookings/{id}                      [Admin or booking owner]
 ```
 
 **Tournaments**
 ```
-GET  /api/tournaments
-GET  /api/tournaments/{id}
-POST /api/tournaments
-GET  /api/tournaments/{id}/bracket
-POST /api/tournaments/{id}/start
+GET  /api/tournaments                          [Public]
+GET  /api/tournaments/{id}                     [Public]
+POST /api/tournaments                          [Admin]
+GET  /api/tournaments/{id}/bracket             [Public]
+POST /api/tournaments/{id}/start               [Admin]
+POST /api/tournaments/{id}/register            [Member]
 ```
 
-**Wallet**
+**Transactions (Treasurer Only)**
 ```
-GET  /api/wallet/balance
-GET  /api/wallet/transactions
-POST /api/wallet/deposit
-POST /api/wallet/withdraw
+GET  /api/transactions?pageNumber=1&pageSize=10  [Treasurer]
+GET  /api/transactions/{id}                      [Treasurer]
+GET  /api/transactions/summary?startDate&endDate [Admin, Treasurer]
+POST /api/transactions                           [Treasurer]
+PUT  /api/transactions/{id}                      [Treasurer]
+DELETE /api/transactions/{id}                    [Treasurer]
+```
+
+**Transaction Categories (Treasurer Only)**
+```
+GET    /api/transactioncategories               [Treasurer]
+GET    /api/transactioncategories/{id}          [Treasurer]
+POST   /api/transactioncategories               [Treasurer]
+PUT    /api/transactioncategories/{id}          [Treasurer]
+DELETE /api/transactioncategories/{id}          [Treasurer]
+```
+
+**Courts**
+```
+GET    /api/courts                              [Public]
+GET    /api/courts/{id}                         [Public]
+POST   /api/courts                              [Admin]
+PUT    /api/courts/{id}                         [Admin]
+DELETE /api/courts/{id}                         [Admin]
+```
+
+**News**
+```
+GET    /api/news?pageNumber=1&pageSize=10       [Public]
+GET    /api/news/{id}                           [Public]
+POST   /api/news                                [Admin]
+PUT    /api/news/{id}                           [Admin]
+DELETE /api/news/{id}                           [Admin]
 ```
 
 ---
@@ -652,6 +716,12 @@ PickleballClubManagement_Frontend/
 │   ├── views/                            # Page components
 │   │   ├── auth/
 │   │   │   └── Login.vue                 # Login form
+│   │   ├── dashboard/                    # Role-specific dashboards
+│   │   │   ├── AdminDashboard.vue        # System overview, fund, tournaments
+│   │   │   ├── TreasurerDashboard.vue    # Financial stats, transactions
+│   │   │   ├── RefereeDashboard.vue      # Match schedule, scoring
+│   │   │   └── MemberDashboard.vue       # Personal stats, wallet, bookings
+│   │   ├── DashboardRouter.vue           # Dynamic dashboard selector
 │   │   ├── bookings/
 │   │   │   └── BookingCalendar.vue       # Weekly calendar view
 │   │   ├── courts/
@@ -666,10 +736,10 @@ PickleballClubManagement_Frontend/
 │   │   │   ├── TournamentList.vue        # Tournament list + create modal
 │   │   │   └── TournamentBracket.vue     # Knockout bracket tree
 │   │   ├── treasury/
-│   │   │   └── TransactionManagement.vue # Finance dashboard (Treasurer)
+│   │   │   └── TransactionManagement.vue # Finance dashboard (Treasurer only)
 │   │   ├── wallet/
 │   │   │   └── MyWallet.vue              # Wallet balance, deposit, history
-│   │   └── Dashboard.vue                 # Home dashboard
+│   │   └── Dashboard.vue                 # Legacy (replaced by DashboardRouter)
 │   │
 │   ├── App.vue                           # Root component
 │   └── main.js                           # Vue app initialization
@@ -805,14 +875,21 @@ docker-compose logs redis
 
 ## 🔐 Tài Khoản Demo (Seeding Data)
 
-Hệ thống đã được nạp sẵn dữ liệu mẫu để kiểm thử các quyền hạn khác nhau:
+Hệ thống đã được nạp sẵn dữ liệu mẫu để kiểm thử các quyền hạn khác nhau. **Mỗi role có dashboard riêng** hiển thị thông tin phù hợp:
 
-| Quyền (Role) | Email | Mật khẩu | Chức năng chính |
+| Quyền (Role) | Email | Mật khẩu | Dashboard Features |
 | :--- | :--- | :--- | :--- |
-| **Admin** | `admin@pcm.com` | `Admin@123` | Quản trị toàn bộ hệ thống, cấu hình sân, giải đấu. |
-| **Thủ Quỹ** | `treasurer@pcm.com` | `Treasurer@123` | Duyệt yêu cầu nạp tiền, xem báo cáo tài chính. |
-| **Trọng Tài** | `referee@pcm.com` | `Referee@123` | Quản lý trận đấu, cập nhật tỉ số, kết thúc trận. |
-| **Hội Viên** | `member1@pcm.com` | `Member@123` | Đặt sân, nạp tiền ví, xem lịch sử, xem giải đấu. |
+| **Admin** | `admin@pcm.com` | `Admin@123` | Tổng quan hệ thống, số lượng thành viên, quỹ CLB (xem), giải đấu đang diễn ra, tin tức, ranking, hoạt động gần đây |
+| **Thủ Quỹ** | `treasurer@pcm.com` | `Treasurer@123` | Dashboard tài chính chi tiết: quỹ CLB, thu/chi tháng này, giao dịch gần đây, cảnh báo ngân sách, báo cáo tài chính |
+| **Trọng Tài** | `referee@pcm.com` | `Referee@123` | Lịch trọng tài: trận đấu hôm nay, đang diễn ra, chờ xử lý, đã hoàn thành, thống kê tuần, notifications |
+| **Hội Viên** | `member1@pcm.com` | `Member@123` | Dashboard cá nhân: số dư ví, điểm ELO, số trận, tỷ lệ thắng, lịch đặt sân sắp tới, giải đấu tham gia, tin tức |
+
+### 🎯 Test Flow Khuyến Nghị
+
+1. **Admin:** Login → Dashboard → Xem tổng quan hệ thống → Tạo tin tức → Quản lý giải đấu
+2. **Treasurer:** Login → Dashboard tài chính → Xem thu chi → Duyệt yêu cầu nạp tiền → Quản lý categories
+3. **Referee:** Login → Dashboard trọng tài → Xem lịch trận hôm nay → Cập nhật tỷ số
+4. **Member:** Login → Dashboard cá nhân → Xem ví + ELO → Đặt sân → Tham gia giải đấu
 
 ---
 
@@ -830,19 +907,16 @@ PickleballClubManagement_Frontend/ # Frontend Vue.js
 │   ├── api/                       # Axios config
 │   ├── components/                # Reusable components (Layout, etc.)
 │   ├── stores/                    # Pinia State Management
-│   ├── views/                     # Page Components (Login, Dashboard, Booking...)
+│   ├── views/
+│   │   ├── dashboard/             # Role-specific dashboards (NEW)
+│   │   │   ├── AdminDashboard.vue
+│   │   │   ├── TreasurerDashboard.vue
+│   │   │   ├── RefereeDashboard.vue
+│   │   │   └── MemberDashboard.vue
+│   │   ├── DashboardRouter.vue    # Dynamic dashboard selector
+│   │   └── ...                    # Other pages (Login, Booking, Treasury...)
 │   └── router/                    # Vue Router config
 ```
 
----
-
-## ✅ Tiêu Chí Tự Đánh Giá
-
-*   [x] **Kiến trúc:** Tuân thủ Clean Architecture, tách biệt rõ ràng các tầng.
-*   [x] **Nghiệp vụ:** Hoàn thiện luồng Ví điện tử (Nạp -> Duyệt -> Thanh toán), Đặt sân (Check trùng, trừ tiền), Giải đấu (Bracket tự động).
-*   [x] **Công nghệ:** Tích hợp thành công Redis (Cache), Hangfire (Job ngầm), SignalR (Real-time notification).
-*   [x] **UI/UX:** Giao diện Tailwind CSS hiện đại, responsive, thân thiện người dùng.
-
----
 
 **© 2024 PCM Project. All rights reserved.**
