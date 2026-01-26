@@ -72,6 +72,20 @@ public class TransactionService : ITransactionService
         return ApiResponse<TransactionCategoryDto>.SuccessResponse(new TransactionCategoryDto { Id = cat.Id, Name = cat.Name, Type = cat.Type }, "Category created");
     }
 
+    public async Task<ApiResponse<TransactionCategoryDto>> UpdateCategoryAsync(int id, TransactionCategoryCreateDto dto)
+    {
+        var cat = await _unitOfWork.TransactionCategories.GetByIdAsync(id);
+        if (cat == null) return ApiResponse<TransactionCategoryDto>.ErrorResponse("Category not found");
+        
+        cat.Name = dto.Name;
+        cat.Type = dto.Type;
+        
+        _unitOfWork.TransactionCategories.Update(cat);
+        await _unitOfWork.SaveChangesAsync();
+        
+        return ApiResponse<TransactionCategoryDto>.SuccessResponse(new TransactionCategoryDto { Id = cat.Id, Name = cat.Name, Type = cat.Type }, "Category updated");
+    }
+
     public async Task<ApiResponse<bool>> DeleteCategoryAsync(int id)
     {
         var cat = await _unitOfWork.TransactionCategories.GetByIdAsync(id);

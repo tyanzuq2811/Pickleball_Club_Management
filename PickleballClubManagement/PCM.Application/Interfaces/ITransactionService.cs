@@ -13,5 +13,6 @@ public interface ITransactionService
     // Transaction Categories
     Task<ApiResponse<List<TransactionCategoryDto>>> GetCategoriesAsync();
     Task<ApiResponse<TransactionCategoryDto>> CreateCategoryAsync(TransactionCategoryCreateDto dto);
+    Task<ApiResponse<TransactionCategoryDto>> UpdateCategoryAsync(int id, TransactionCategoryCreateDto dto);
     Task<ApiResponse<bool>> DeleteCategoryAsync(int id);
 }

@@ -147,6 +147,31 @@ public class BookingService : IBookingService
         });
     }
 
+    public async Task<ApiResponse<List<BookingDto>>> GetMemberBookingsAsync(int memberId)
+    {
+        var bookings = await _unitOfWork.Bookings
+            .FindAsync(b => b.MemberId == memberId);
+        
+        var court = await _unitOfWork.Courts.GetAllAsync();
+        var courtDict = court.ToDictionary(c => c.Id, c => c.Name);
+        
+        var result = bookings
+            .OrderByDescending(b => b.StartTime)
+            .Select(b => new BookingDto 
+            { 
+                Id = b.Id, 
+                CourtId = b.CourtId,
+                CourtName = courtDict.ContainsKey(b.CourtId) ? courtDict[b.CourtId] : "Unknown",
+                MemberId = b.MemberId,
+                StartTime = b.StartTime,
+                EndTime = b.EndTime,
+                Status = b.Status,
+                TotalPrice = b.TotalPrice
+            }).ToList();
+
+        return ApiResponse<List<BookingDto>>.SuccessResponse(result);
+    }
+
     public async Task<ApiResponse<List<BookingDto>>> CreateRecurringAsync(RecurringBookingDto dto, int memberId)
     {
         // Logic đơn giản: Loop qua các ngày và gọi CreateAsync

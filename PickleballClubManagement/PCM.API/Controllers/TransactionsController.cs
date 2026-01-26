@@ -19,6 +19,7 @@ public class TransactionsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = "Treasurer")]
     public async Task<ActionResult<ApiResponse<TransactionDto>>> GetTransactionById(int id)
     {
         var result = await _transactionService.GetByIdAsync(id);
@@ -26,6 +27,7 @@ public class TransactionsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Treasurer")]
     public async Task<ActionResult<ApiResponse<PagedResult<TransactionDto>>>> GetAllTransactions([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
         var result = await _transactionService.GetAllAsync(pageNumber, pageSize);
@@ -33,6 +35,7 @@ public class TransactionsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Treasurer")]
     public async Task<ActionResult<ApiResponse<TransactionDto>>> CreateTransaction([FromBody] TransactionCreateDto dto)
     {
         var createdBy = int.Parse(User.FindFirst("Id")?.Value ?? "0");
@@ -41,6 +44,7 @@ public class TransactionsController : ControllerBase
     }
 
     [HttpGet("summary")]
+    [Authorize(Roles = "Admin,Treasurer")]
     public async Task<ActionResult<ApiResponse<TransactionSummaryDto>>> GetTransactionSummary([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
     {
         var result = await _transactionService.GetSummaryAsync(startDate, endDate);

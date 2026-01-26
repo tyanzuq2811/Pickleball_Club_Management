@@ -28,6 +28,21 @@ public class BookingsController : ControllerBase
         return result.Success ? Ok(result) : BadRequest(result);
     }
 
+    [HttpGet("my-bookings")]
+    public async Task<ActionResult<ApiResponse<List<BookingDto>>>> GetMyBookings()
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+            
+        var member = await _memberService.GetByUserIdAsync(userId);
+        if (member?.Data == null)
+            return Unauthorized(ApiResponse<List<BookingDto>>.ErrorResponse("Không tìm thấy thông tin thành viên"));
+
+        var result = await _bookingService.GetMemberBookingsAsync(member.Data.Id);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<ApiResponse<BookingDto>>> GetBookingById(int id)
     {

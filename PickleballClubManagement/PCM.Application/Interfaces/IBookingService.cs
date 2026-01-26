@@ -7,6 +7,7 @@ public interface IBookingService
 {
     Task<ApiResponse<PagedResult<BookingDto>>> GetAllAsync(int pageNumber, int pageSize);
     Task<ApiResponse<BookingDto>> GetByIdAsync(int id);
+    Task<ApiResponse<List<BookingDto>>> GetMemberBookingsAsync(int memberId);
     Task<ApiResponse<BookingDto>> CreateAsync(BookingCreateDto dto, int memberId);
     Task<ApiResponse<List<BookingDto>>> CreateRecurringAsync(RecurringBookingDto dto, int memberId);
     Task<ApiResponse<bool>> CancelAsync(int id, int memberId);
