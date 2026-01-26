@@ -7,12 +7,46 @@
       </button>
     </div>
 
+    <!-- Filter Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Trạng thái</label>
+          <select v-model.number="filters.status" 
+                  class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            <option :value="null">Tất cả</option>
+            <option :value="0">Đăng ký</option>
+            <option :value="1">Đang diễn ra</option>
+            <option :value="2">Kết thúc</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Loại giải</label>
+          <select v-model.number="filters.type" 
+                  class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            <option :value="null">Tất cả</option>
+            <option :value="0">Loại trực tiếp</option>
+            <option :value="1">Vòng tròn</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-2">Chế độ chơi</label>
+          <select v-model.number="filters.gameMode" 
+                  class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            <option :value="null">Tất cả</option>
+            <option :value="0">Đơn</option>
+            <option :value="1">Đôi</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
     <div v-if="tournamentStore.loading" class="text-center py-10">
       <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600 mx-auto"></div>
     </div>
 
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div v-for="tour in tournamentStore.tournaments" :key="tour.id" 
+      <div v-for="tour in filteredTournaments" :key="tour.id" 
            class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
         <div class="h-32 bg-gradient-to-r from-primary-500 to-primary-600 flex items-center justify-center">
           <TrophyIcon class="w-16 h-16 text-white opacity-80" />
@@ -35,12 +69,39 @@
               <CurrencyDollarIcon class="w-4 h-4 mr-2 text-slate-400" />
               Phí: {{ formatCurrency(tour.entryFee) }}
             </div>
+            <div class="flex items-center text-xs">
+              <span class="text-slate-500">{{ tour.participantCount || 0 }}/{{ tour.maxParticipants }} người</span>
+            </div>
           </div>
 
-          <router-link :to="`/tournaments/${tour.id}/bracket`" 
-             class="block w-full text-center py-2 px-4 bg-slate-50 text-primary-600 font-medium rounded-lg hover:bg-primary-50 transition-colors border border-slate-200">
-            Xem Cây Thi Đấu
-          </router-link>
+          <div class="space-y-2">
+            <!-- Member: Join Tournament -->
+            <button v-if="tour.status === 0 && !authStore.isAdmin" @click="joinTournament(tour.id)" 
+                    class="w-full py-2 px-4 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
+              Đăng ký tham gia
+            </button>
+
+            <!-- Admin Actions -->
+            <template v-if="authStore.isAdmin">
+              <button v-if="tour.status === 0" @click="autoDivideTeams(tour.id)"
+                      class="w-full py-2 px-4 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                Chia đội tự động
+              </button>
+              <button v-if="tour.status === 0" @click="generateBracket(tour.id)"
+                      class="w-full py-2 px-4 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors text-sm">
+                Tạo cây thi đấu
+              </button>
+              <button v-if="tour.status === 0" @click="startTournament(tour.id)"
+                      class="w-full py-2 px-4 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-colors text-sm">
+                Bắt đầu giải
+              </button>
+            </template>
+
+            <router-link :to="`/tournaments/${tour.id}/bracket`" 
+               class="block w-full text-center py-2 px-4 bg-slate-50 text-primary-600 font-medium rounded-lg hover:bg-primary-50 transition-colors border border-slate-200">
+              Xem Cây Thi Đấu
+            </router-link>
+          </div>
         </div>
       </div>
     </div>
@@ -133,12 +194,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useTournamentStore } from '@/stores/tournament';
+import { useAuthStore } from '@/stores/auth';
 import { TrophyIcon, CalendarIcon, CurrencyDollarIcon } from '@heroicons/vue/24/outline';
 import { format } from 'date-fns';
+import { useToast } from 'vue-toastification';
 
 const tournamentStore = useTournamentStore();
+const authStore = useAuthStore();
+const toast = useToast();
 const showCreateModal = ref(false);
 const newTournament = ref({
   title: '',
@@ -150,6 +215,30 @@ const newTournament = ref({
   maxParticipants: 16,
   type: 0,
   gameMode: 0
+});
+
+const filters = ref({
+  status: null,
+  type: null,
+  gameMode: null
+});
+
+const filteredTournaments = computed(() => {
+  let result = tournamentStore.tournaments;
+  
+  if (filters.value.status !== null) {
+    result = result.filter(t => t.status === filters.value.status);
+  }
+  
+  if (filters.value.type !== null) {
+    result = result.filter(t => t.type === filters.value.type);
+  }
+  
+  if (filters.value.gameMode !== null) {
+    result = result.filter(t => t.gameMode === filters.value.gameMode);
+  }
+  
+  return result;
 });
 
 onMounted(() => {
@@ -186,4 +275,45 @@ const getStatusClass = (status) => [
   'bg-green-100 text-green-800', 
   'bg-blue-100 text-blue-800', 
   'bg-slate-100 text-slate-800'][status];
+
+// Tournament Actions
+const joinTournament = async (tournamentId) => {
+  if (confirm('Xác nhận đăng ký tham gia giải đấu này?')) {
+    const success = await tournamentStore.joinTournament(tournamentId);
+    if (success) {
+      toast.success('Đăng ký tham gia thành công!');
+      tournamentStore.fetchTournaments();
+    }
+  }
+};
+
+const autoDivideTeams = async (tournamentId) => {
+  if (confirm('Tự động chia đội dựa trên ELO ranking?')) {
+    const success = await tournamentStore.autoDivideTeams(tournamentId);
+    if (success) {
+      toast.success('Chia đội thành công!');
+      tournamentStore.fetchTournaments();
+    }
+  }
+};
+
+const generateBracket = async (tournamentId) => {
+  if (confirm('Tạo cây thi đấu cho giải này?')) {
+    const success = await tournamentStore.generateBracket(tournamentId);
+    if (success) {
+      toast.success('Tạo cây thi đấu thành công!');
+      tournamentStore.fetchTournaments();
+    }
+  }
+};
+
+const startTournament = async (tournamentId) => {
+  if (confirm('Bắt đầu giải đấu? Không thể hoàn tác!')) {
+    const success = await tournamentStore.startTournament(tournamentId);
+    if (success) {
+      toast.success('Giải đấu đã bắt đầu!');
+      tournamentStore.fetchTournaments();
+    }
+  }
+};
 </script>

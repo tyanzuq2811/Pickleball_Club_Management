@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import Login from '@/views/auth/Login.vue'
 import MainLayout from '@/components/layout/MainLayout.vue'
-import Dashboard from '@/views/Dashboard.vue'
+import DashboardRouter from '@/views/DashboardRouter.vue'
 import BookingCalendar from '@/views/bookings/BookingCalendar.vue'
 import TournamentList from '@/views/tournaments/TournamentList.vue'
 import TournamentBracket from '@/views/tournaments/TournamentBracket.vue'
@@ -30,7 +30,7 @@ const router = createRouter({
         {
           path: '',
           name: 'dashboard',
-          component: Dashboard
+          component: DashboardRouter
         },
         {
           path: 'bookings',
@@ -60,7 +60,7 @@ const router = createRouter({
           path: 'treasury',
           name: 'treasury',
           component: TransactionManagement,
-          meta: { roles: ['Admin', 'Treasurer'] }
+          meta: { roles: ['Treasurer'] }
         },
         {
           path: 'referee',

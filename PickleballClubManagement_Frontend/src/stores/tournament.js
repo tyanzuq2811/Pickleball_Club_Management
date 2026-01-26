@@ -57,6 +57,66 @@ export const useTournamentStore = defineStore('tournament', {
             } finally {
                 this.loading = false;
             }
+        },
+        async joinTournament(tournamentId) {
+            const toast = useToast();
+            try {
+                const response = await axiosClient.post(`/tournaments/${tournamentId}/join`);
+                if (response.data.success) {
+                    return true;
+                } else {
+                    toast.error(response.data.message || "Đăng ký thất bại");
+                    return false;
+                }
+            } catch (error) {
+                toast.error(error.response?.data?.message || "Lỗi khi đăng ký giải");
+                return false;
+            }
+        },
+        async autoDivideTeams(tournamentId) {
+            const toast = useToast();
+            try {
+                const response = await axiosClient.post(`/tournaments/${tournamentId}/auto-divide-teams`);
+                if (response.data.success) {
+                    return true;
+                } else {
+                    toast.error(response.data.message || "Chia đội thất bại");
+                    return false;
+                }
+            } catch (error) {
+                toast.error(error.response?.data?.message || "Lỗi khi chia đội");
+                return false;
+            }
+        },
+        async generateBracket(tournamentId) {
+            const toast = useToast();
+            try {
+                const response = await axiosClient.post(`/tournaments/${tournamentId}/generate-bracket`);
+                if (response.data.success) {
+                    return true;
+                } else {
+                    toast.error(response.data.message || "Tạo cây đấu thất bại");
+                    return false;
+                }
+            } catch (error) {
+                toast.error(error.response?.data?.message || "Lỗi khi tạo cây đấu");
+                return false;
+            }
+        },
+        async startTournament(tournamentId) {
+            const toast = useToast();
+            try {
+                const response = await axiosClient.post(`/tournaments/${tournamentId}/start`);
+                if (response.data.success) {
+                    return true;
+                } else {
+                    toast.error(response.data.message || "Bắt đầu giải thất bại");
+                    return false;
+                }
+            } catch (error) {
+                toast.error(error.response?.data?.message || "Lỗi khi bắt đầu giải");
+                return false;
+            }
         }
     }
 });

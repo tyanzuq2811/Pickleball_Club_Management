@@ -50,12 +50,13 @@ export const useTransactionStore = defineStore('transaction', {
                 const response = await axiosClient.post('/transactioncategories', categoryData);
                 if (response.data.success) {
                     await this.fetchCategories();
-                    return { success: true, data: response.data.data };
+                    return true;
                 }
+                return false;
             } catch (error) {
                 this.error = error.response?.data?.message || 'Lỗi khi tạo danh mục';
                 console.error(error);
-                return { success: false, message: this.error };
+                return false;
             } finally {
                 this.loading = false;
             }
@@ -68,12 +69,13 @@ export const useTransactionStore = defineStore('transaction', {
                 const response = await axiosClient.put(`/transactioncategories/${id}`, categoryData);
                 if (response.data.success) {
                     await this.fetchCategories();
-                    return { success: true, data: response.data.data };
+                    return true;
                 }
+                return false;
             } catch (error) {
                 this.error = error.response?.data?.message || 'Lỗi khi cập nhật danh mục';
                 console.error(error);
-                return { success: false, message: this.error };
+                return false;
             } finally {
                 this.loading = false;
             }
@@ -86,16 +88,54 @@ export const useTransactionStore = defineStore('transaction', {
                 const response = await axiosClient.delete(`/transactioncategories/${id}`);
                 if (response.data.success) {
                     await this.fetchCategories();
-                    return { success: true };
+                    return true;
                 }
+                return false;
             } catch (error) {
                 this.error = error.response?.data?.message || 'Lỗi khi xóa danh mục';
                 console.error(error);
-                return { success: false, message: this.error };
+                return false;
             } finally {
                 this.loading = false;
             }
         },
+        
+        async createTransaction(transactionData) {
+            const toast = useToast();
+            this.loading = true;
+            try {
+                const response = await axiosClient.post('/transactions', transactionData);
+                if (response.data.success) {
+                    await this.fetchTransactions();
+                    return true;
+                }
+                toast.error(response.data.message || 'Tạo giao dịch thất bại');
+                return false;
+            } catch (error) {
+                toast.error(error.response?.data?.message || 'Lỗi khi tạo giao dịch');
+                return false;
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        async deleteTransaction(id) {
+            this.loading = true;
+            try {
+                const response = await axiosClient.delete(`/transactions/${id}`);
+                if (response.data.success) {
+                    await this.fetchTransactions();
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error(error);
+                return false;
+            } finally {
+                this.loading = false;
+            }
+        },
+        
         // Giả lập lấy danh sách nạp tiền chờ duyệt (Cần API tương ứng ở Backend)
         async fetchPendingDeposits() {
             this.loading = true;

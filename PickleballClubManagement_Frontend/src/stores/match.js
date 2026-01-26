@@ -40,6 +40,36 @@ export const useMatchStore = defineStore('match', {
                 toast.error(msg);
                 return false;
             }
+        },
+        async updateMatchScore(matchId, matchData) {
+            const toast = useToast();
+            try {
+                const response = await axiosClient.put(`/matches/${matchId}`, matchData);
+                if (response.data.success) {
+                    await this.fetchMatches();
+                    return true;
+                }
+                toast.error(response.data.message || "Cập nhật thất bại");
+                return false;
+            } catch (error) {
+                toast.error(error.response?.data?.message || "Cập nhật thất bại");
+                return false;
+            }
+        },
+        async finishMatch(matchId) {
+            const toast = useToast();
+            try {
+                const response = await axiosClient.post(`/matches/${matchId}/finish`);
+                if (response.data.success) {
+                    await this.fetchMatches();
+                    return true;
+                }
+                toast.error(response.data.message || "Kết thúc trận thất bại");
+                return false;
+            } catch (error) {
+                toast.error(error.response?.data?.message || "Lỗi khi kết thúc trận");
+                return false;
+            }
         }
     }
 });

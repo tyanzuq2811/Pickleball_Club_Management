@@ -47,6 +47,38 @@ export const useBookingStore = defineStore('booking', {
                 return false;
             }
             return false;
+        },
+        async createRecurringBooking(recurringData) {
+            const toast = useToast();
+            try {
+                const response = await axiosClient.post('/bookings/recurring', recurringData);
+                if (response.data.success) {
+                    const count = response.data.data?.length || 0;
+                    toast.success(`Đặt lịch định kỳ thành công! Tạo được ${count} booking(s)`);
+                    await this.fetchBookings();
+                    return true;
+                }
+            } catch (error) {
+                const msg = error.response?.data?.message || "Đặt lịch định kỳ thất bại";
+                toast.error(msg);
+                return false;
+            }
+            return false;
+        },
+        async cancelBooking(bookingId) {
+            const toast = useToast();
+            try {
+                const response = await axiosClient.put(`/bookings/${bookingId}/cancel`);
+                if (response.data.success) {
+                    await this.fetchBookings();
+                    return true;
+                }
+                toast.error(response.data.message || "Hủy booking thất bại");
+                return false;
+            } catch (error) {
+                toast.error(error.response?.data?.message || "Lỗi khi hủy booking");
+                return false;
+            }
         }
     }
 });

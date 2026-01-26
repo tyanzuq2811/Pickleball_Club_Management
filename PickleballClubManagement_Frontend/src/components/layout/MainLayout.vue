@@ -31,7 +31,7 @@
             Giải đấu
         </router-link>
 
-        <router-link v-if="authStore.isAdmin || authStore.isTreasurer" to="/treasury" class="flex items-center px-4 py-3 text-slate-600 rounded-lg hover:bg-sky-50 hover:text-sky-600 transition-colors group" active-class="bg-sky-50 text-sky-600 font-medium">
+        <router-link v-if="authStore.isTreasurer" to="/treasury" class="flex items-center px-4 py-3 text-slate-600 rounded-lg hover:bg-sky-50 hover:text-sky-600 transition-colors group" active-class="bg-sky-50 text-sky-600 font-medium">
             <BanknotesIcon class="w-5 h-5 mr-3 group-hover:text-sky-600" />
             Quản lý Tài chính
         </router-link>

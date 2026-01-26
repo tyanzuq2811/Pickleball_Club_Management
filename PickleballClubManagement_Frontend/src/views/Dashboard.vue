@@ -7,7 +7,7 @@
 
     <template v-else>
       <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
           <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center space-x-4">
               <div class="p-3 bg-blue-100 rounded-lg text-blue-600">
                   <UsersIcon class="w-8 h-8" />
@@ -35,6 +35,91 @@
               <div>
                   <p class="text-sm text-slate-500 font-medium">Giải đấu đang chạy</p>
                   <p class="text-2xl font-bold text-slate-800">{{ stats.ongoingTournaments }}</p>
+              </div>
+          </div>
+
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center space-x-4">
+              <div class="p-3 bg-orange-100 rounded-lg text-orange-600">
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+              </div>
+              <div>
+                  <p class="text-sm text-slate-500 font-medium">Trận hôm nay</p>
+                  <p class="text-2xl font-bold text-slate-800">{{ todayMatches.length }}</p>
+              </div>
+          </div>
+
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center space-x-4">
+              <div class="p-3 bg-sky-100 rounded-lg text-sky-600">
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+              </div>
+              <div>
+                  <p class="text-sm text-slate-500 font-medium">Booking sắp tới</p>
+                  <p class="text-2xl font-bold text-slate-800">{{ upcomingBookings.length }}</p>
+              </div>
+          </div>
+      </div>
+
+      <!-- New Widgets Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+              <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Trận đấu hôm nay
+              </h3>
+              
+              <div v-if="todayMatches.length === 0" class="text-center py-8 text-gray-500">
+                Không có trận đấu nào hôm nay
+              </div>
+              
+              <div v-else class="space-y-3">
+                  <div v-for="match in todayMatches" :key="match.id" class="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                      <div class="flex justify-between items-center">
+                        <div class="flex-1">
+                          <p class="font-medium text-slate-800 text-sm">{{ match.team1Name }} vs {{ match.team2Name }}</p>
+                          <p class="text-xs text-slate-500 mt-1">Sân: {{ match.courtName }} • {{ formatTime(match.matchDate) }}</p>
+                        </div>
+                        <div class="text-right">
+                          <span class="px-2 py-1 text-xs font-semibold rounded-full" :class="getMatchStatusClass(match.status)">
+                            {{ getMatchStatusText(match.status) }}
+                          </span>
+                        </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+              <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                Booking sắp tới của bạn
+              </h3>
+              
+              <div v-if="upcomingBookings.length === 0" class="text-center py-8 text-gray-500">
+                Bạn chưa có booking nào
+              </div>
+              
+              <div v-else class="space-y-3">
+                  <div v-for="booking in upcomingBookings.slice(0, 5)" :key="booking.id" class="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                      <div class="flex justify-between items-center">
+                        <div class="flex-1">
+                          <p class="font-medium text-slate-800 text-sm">Sân {{ booking.courtName || booking.CourtName }}</p>
+                          <p class="text-xs text-slate-500 mt-1">{{ formatDate(booking.startTime || booking.StartTime) }} • {{ formatTimeRange(booking.startTime || booking.StartTime, booking.endTime || booking.EndTime) }}</p>
+                        </div>
+                        <div class="text-right">
+                          <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            Đã xác nhận
+                          </span>
+                        </div>
+                      </div>
+                  </div>
               </div>
           </div>
       </div>
@@ -93,10 +178,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { UsersIcon, CurrencyDollarIcon, TrophyIcon } from '@heroicons/vue/24/outline'
 import axiosClient from '@/api/axiosClient'
+import { format, isToday, isFuture, parseISO } from 'date-fns'
+import { useAuthStore } from '@/stores/auth'
 
+const authStore = useAuthStore()
 const loading = ref(true)
 const stats = ref({
   totalMembers: 0,
@@ -106,16 +194,63 @@ const stats = ref({
 const pinnedNews = ref([])
 const latestNews = ref([])
 const topRanking = ref([])
+const allMatches = ref([])
+const allBookings = ref([])
+
+const todayMatches = computed(() => {
+  return allMatches.value.filter(match => {
+    if (!match.matchDate && !match.date) return false
+    const matchDate = parseISO(match.matchDate || match.date)
+    return isToday(matchDate)
+  })
+})
+
+const upcomingBookings = computed(() => {
+  return allBookings.value.filter(booking => {
+    const startTime = booking.startTime || booking.StartTime
+    if (!startTime) return false
+    const parsedTime = parseISO(startTime)
+    return isFuture(parsedTime) && booking.status === 0 // Confirmed bookings
+  }).sort((a, b) => {
+    const timeA = a.startTime || a.StartTime
+    const timeB = b.startTime || b.StartTime
+    return new Date(timeA) - new Date(timeB)
+  })
+})
 
 onMounted(async () => {
   await Promise.all([
     fetchStats(),
     fetchPinnedNews(),
     fetchLatestNews(),
-    fetchTopRanking()
+    fetchTopRanking(),
+    fetchMatches(),
+    fetchBookings()
   ])
   loading.value = false
 })
+
+const fetchMatches = async () => {
+  try {
+    const response = await axiosClient.get('/matches?pageSize=100')
+    if (response.data.success) {
+      allMatches.value = response.data.data.items || []
+    }
+  } catch (error) {
+    console.error('Error fetching matches:', error)
+  }
+}
+
+const fetchBookings = async () => {
+  try {
+    const response = await axiosClient.get('/bookings/my-bookings')
+    if (response.data.success) {
+      allBookings.value = response.data.data || []
+    }
+  } catch (error) {
+    console.error('Error fetching bookings:', error)
+  }
+}
 
 const fetchStats = async () => {
   try {
@@ -180,6 +315,35 @@ const formatCurrency = (amount) => {
     style: 'currency',
     currency: 'VND'
   }).format(amount)
+}
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return 'N/A'
+  return format(parseISO(dateStr), 'dd/MM/yyyy')
+}
+
+const formatTime = (dateStr) => {
+  if (!dateStr) return 'N/A'
+  return format(parseISO(dateStr), 'HH:mm')
+}
+
+const formatTimeRange = (start, end) => {
+  if (!start || !end) return 'N/A'
+  return `${formatTime(start)} - ${formatTime(end)}`
+}
+
+const getMatchStatusText = (status) => {
+  const texts = { 0: 'Chờ', 1: 'Đang chơi', 2: 'Hoàn thành' }
+  return texts[status] || 'Unknown'
+}
+
+const getMatchStatusClass = (status) => {
+  const classes = {
+    0: 'bg-yellow-100 text-yellow-800',
+    1: 'bg-blue-100 text-blue-800',
+    2: 'bg-green-100 text-green-800'
+  }
+  return classes[status] || 'bg-gray-100 text-gray-800'
 }
 
 const truncate = (text, length) => {
