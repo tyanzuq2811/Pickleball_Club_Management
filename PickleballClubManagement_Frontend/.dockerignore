@@ -1,0 +1,23 @@
+node_modules
+dist
+.git
+.gitignore
+.vscode
+*.log
+*.md
+README.md
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Test files
+coverage
+**/*.test.js
+**/*.spec.js
+
+# Docker
+Dockerfile*
+.dockerignore
+docker-compose*

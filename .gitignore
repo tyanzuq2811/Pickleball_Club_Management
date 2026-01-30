@@ -5,6 +5,11 @@ obj/
 *.exe
 *.pdb
 
+# Docker env files
+.env
+.env.local
+.env.production
+
 # Frontend env
 PickleballClubManagement_Frontend/.env
 PickleballClubManagement_Frontend/.env.local

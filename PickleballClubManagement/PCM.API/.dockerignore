@@ -1,0 +1,27 @@
+**/.git
+**/.gitignore
+**/.vs
+**/.vscode
+**/bin
+**/obj
+**/*.user
+**/*.log
+
+# Sensitive files
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/appsettings.Local.json
+**/secrets.json
+
+# Test files
+**/*Tests/
+**/*.Tests.csproj
+
+# Documentation
+**/README.md
+**/*.md
+
+# Docker
+**/Dockerfile*
+**/.dockerignore
+**/docker-compose*

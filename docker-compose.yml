@@ -5,13 +5,19 @@ services:
     container_name: pcm-sqlserver
     environment:
       - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=Password123! 
+      - MSSQL_SA_PASSWORD=${DB_PASSWORD:-Password123!}
     ports:
       - "1433:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
     networks:
       - pcm-network
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "${DB_PASSWORD:-Password123!}" -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   # 2. Redis Cache
   redis:
@@ -21,6 +27,11 @@ services:
       - "6379:6379"
     networks:
       - pcm-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # 3. Backend API
   backend:
@@ -29,15 +40,22 @@ services:
       dockerfile: PCM.API/Dockerfile
     container_name: pcm-backend
     environment:
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=PCM_189_DB_Dev;User Id=sa;Password=Password123!;TrustServerCertificate=True;MultipleActiveResultSets=true
-      - ConnectionStrings__HangfireConnection=Server=sqlserver;Database=PCM_189_Hangfire;User Id=sa;Password=Password123!;TrustServerCertificate=True;MultipleActiveResultSets=true
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=PCM_189_DB;User Id=sa;Password=${DB_PASSWORD:-Password123!};TrustServerCertificate=True;MultipleActiveResultSets=true
+      - ConnectionStrings__HangfireConnection=Server=sqlserver;Database=PCM_189_Hangfire;User Id=sa;Password=${DB_PASSWORD:-Password123!};TrustServerCertificate=True;MultipleActiveResultSets=true
       - ConnectionStrings__RedisConnection=redis:6379
+      - Jwt__Key=${JWT_KEY:-YourSuperSecretKeyForJwtTokenGenerationMustBeLongEnough}
+      - Jwt__Issuer=https://localhost:7000
+      - Jwt__Audience=https://localhost:7000
+      - Jwt__ExpireHours=24
       - ASPNETCORE_URLS=http://+:8080
     ports:
       - "5000:8080" 
     depends_on:
-      - sqlserver
-      - redis
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - pcm-network
 
@@ -46,6 +64,8 @@ services:
     build:
       context: ./PickleballClubManagement_Frontend
       dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:5000/api
     container_name: pcm-frontend
     ports:
       - "5173:80" 
