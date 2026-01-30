@@ -69,7 +69,18 @@ export const useTournamentStore = defineStore('tournament', {
                     return false;
                 }
             } catch (error) {
-                toast.error(error.response?.data?.message || "Lỗi khi đăng ký giải");
+                const errorMessage = error.response?.data?.message || "Lỗi khi đăng ký giải";
+                
+                // Customize error messages
+                if (errorMessage.toLowerCase().includes('already joined') || errorMessage.toLowerCase().includes('already participating')) {
+                    toast.warning('⚠️ Bạn đã đăng ký giải đấu này rồi!');
+                } else if (errorMessage.toLowerCase().includes('full') || errorMessage.toLowerCase().includes('maximum')) {
+                    toast.error('❌ Giải đấu đã đủ số lượng người tham gia!');
+                } else if (errorMessage.toLowerCase().includes('closed') || errorMessage.toLowerCase().includes('ended')) {
+                    toast.error('❌ Giải đấu đã đóng đăng ký!');
+                } else {
+                    toast.error(errorMessage);
+                }
                 return false;
             }
         },
@@ -115,6 +126,41 @@ export const useTournamentStore = defineStore('tournament', {
                 }
             } catch (error) {
                 toast.error(error.response?.data?.message || "Lỗi khi bắt đầu giải");
+                return false;
+            }
+        },
+        async updateTournament(tournamentId, tournamentData) {
+            const toast = useToast();
+            this.loading = true;
+            try {
+                const response = await axiosClient.put(`/tournaments/${tournamentId}`, tournamentData);
+                if (response.data.success) {
+                    return true;
+                } else {
+                    toast.error(response.data.message || "Cập nhật giải đấu thất bại");
+                    return false;
+                }
+            } catch (error) {
+                console.error(error);
+                toast.error(error.response?.data?.message || "Lỗi khi cập nhật giải đấu");
+                return false;
+            } finally {
+                this.loading = false;
+            }
+        },
+        async deleteTournament(tournamentId) {
+            const toast = useToast();
+            try {
+                const response = await axiosClient.delete(`/tournaments/${tournamentId}`);
+                if (response.data.success) {
+                    return true;
+                } else {
+                    toast.error(response.data.message || "Xóa giải đấu thất bại");
+                    return false;
+                }
+            } catch (error) {
+                console.error(error);
+                toast.error(error.response?.data?.message || "Lỗi khi xóa giải đấu");
                 return false;
             }
         }

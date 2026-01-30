@@ -4,6 +4,14 @@
       <h2 class="text-2xl font-bold text-slate-800">Lịch Đặt Sân</h2>
       
       <div class="flex items-center space-x-4">
+        <button @click="showAvailableSlotsModal = true" 
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Xem slot trống
+        </button>
+        
         <button @click="showRecurringModal = true" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm">
           + Đặt lịch định kỳ
         </button>
@@ -211,6 +219,7 @@ import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '@heroicons/vue/24/o
 import { startOfWeek, addDays, format, isSameDay, addHours, startOfDay } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useToast } from 'vue-toastification';
+import AvailableSlots from './AvailableSlots.vue';
 
 const bookingStore = useBookingStore();
 const toast = useToast();
@@ -219,6 +228,7 @@ const selectedCourtId = ref(null);
 const showRecurringModal = ref(false);
 const showDetailModal = ref(false);
 const selectedBooking = ref(null);
+const showAvailableSlotsModal = ref(false);
 const daysOfWeek = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
 const recurringData = ref({

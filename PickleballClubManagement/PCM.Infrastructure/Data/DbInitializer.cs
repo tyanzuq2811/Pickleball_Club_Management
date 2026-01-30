@@ -97,7 +97,7 @@ public static class DbInitializer
             });
         }
 
-        // Seed Sample Members
+        // Seed Sample Members - NHIỀU HƠN
         var sampleMembers = new List<(string Name, string Email, double Rank)>
         {
             ("Hội Viên 1", "member1@pcm.com", 1200),
@@ -106,7 +106,20 @@ public static class DbInitializer
             ("Lê Văn C", "levanc@pcm.com", 1400),
             ("Phạm Thị D", "phamthid@pcm.com", 1350),
             ("Hoàng Văn E", "hoangvane@pcm.com", 1200),
-            ("Vũ Thị F", "vuthif@pcm.com", 1280)
+            ("Vũ Thị F", "vuthif@pcm.com", 1280),
+            ("Đặng Minh G", "dangminhg@pcm.com", 1320),
+            ("Bùi Thị H", "buithih@pcm.com", 1260),
+            ("Dương Văn I", "duongvani@pcm.com", 1380),
+            ("Võ Thị K", "vothik@pcm.com", 1290),
+            ("Phan Văn L", "phanvanl@pcm.com", 1340),
+            ("Trịnh Thị M", "trinhthim@pcm.com", 1310),
+            ("Lý Văn N", "lyvann@pcm.com", 1270),
+            ("Mai Thị O", "maithio@pcm.com", 1360),
+            ("Ngô Văn P", "ngovanp@pcm.com", 1330),
+            ("Cao Thị Q", "caothiq@pcm.com", 1240),
+            ("Tô Văn R", "tovanr@pcm.com", 1370),
+            ("Hồ Thị S", "hothis@pcm.com", 1300),
+            ("Đinh Văn T", "dinhvant@pcm.com", 1280)
         };
 
         var random = new Random();
@@ -146,14 +159,17 @@ public static class DbInitializer
 
         await context.SaveChangesAsync();
 
-        // Seed Courts
+        // Seed Courts - THÊM SÂN
         if (!await context.Courts.AnyAsync())
         {
             var courts = new List<Court>
             {
                 new Court { Name = "Sân 1", Description = "Sân chính - Có đèn", IsActive = true, PricePerHour = 100000 },
                 new Court { Name = "Sân 2", Description = "Sân phụ - Có mái che", IsActive = true, PricePerHour = 80000 },
-                new Court { Name = "Sân 3", Description = "Sân VIP - Điều hòa", IsActive = true, PricePerHour = 150000 }
+                new Court { Name = "Sân 3", Description = "Sân VIP - Điều hòa", IsActive = true, PricePerHour = 150000 },
+                new Court { Name = "Sân 4", Description = "Sân ngoài trời - View đẹp", IsActive = true, PricePerHour = 90000 },
+                new Court { Name = "Sân 5", Description = "Sân mini - Phù hợp tập luyện", IsActive = true, PricePerHour = 70000 },
+                new Court { Name = "Sân 6", Description = "Sân thi đấu - Khán đài lớn", IsActive = true, PricePerHour = 120000 }
             };
             context.Courts.AddRange(courts);
             await context.SaveChangesAsync();
@@ -176,69 +192,137 @@ public static class DbInitializer
             await context.SaveChangesAsync();
         }
 
-        // Seed Initial Club Fund
+        // Seed Initial Club Fund - NHIỀU GIAO DỊCH HƠN
         if (!await context.Transactions.AnyAsync())
         {
             var admin = await context.Members.FirstAsync();
             var incomeCategory = await context.TransactionCategories.FirstAsync(c => c.Name == "Đóng góp");
+            var expenseCategory = await context.TransactionCategories.FirstAsync(c => c.Name == "Sửa chữa");
+            var courtFeeCategory = await context.TransactionCategories.FirstAsync(c => c.Name == "Phí sân");
             
-            var transactions = new List<Transaction>
+            var transactions = new List<Transaction>();
+            
+            // Quỹ khởi tạo
+            transactions.Add(new Transaction
             {
-                new Transaction
+                Date = DateTime.UtcNow.AddMonths(-3),
+                Amount = 10000000,
+                Description = "Quỹ khởi tạo CLB",
+                CategoryId = incomeCategory.Id,
+                CreatedBy = admin.Id,
+                CreatedDate = DateTime.UtcNow.AddMonths(-3)
+            });
+            
+            // Các giao dịch trong 90 ngày qua
+            for (int day = -90; day < 0; day++)
+            {
+                var date = DateTime.UtcNow.AddDays(day);
+                
+                // Thu nhập từ booking (2-4 giao dịch/ngày)
+                var bookingIncomes = random.Next(2, 5);
+                for (int i = 0; i < bookingIncomes; i++)
                 {
-                    Date = DateTime.UtcNow.AddMonths(-2),
-                    Amount = 5000000,
-                    Description = "Quỹ khởi tạo CLB",
-                    CategoryId = incomeCategory.Id,
-                    CreatedBy = admin.Id,
-                    CreatedDate = DateTime.UtcNow.AddMonths(-2)
-                },
-                new Transaction
-                {
-                    Date = DateTime.UtcNow.AddMonths(-1),
-                    Amount = 2000000,
-                    Description = "Quyên góp từ các hội viên",
-                    CategoryId = incomeCategory.Id,
-                    CreatedBy = admin.Id,
-                    CreatedDate = DateTime.UtcNow.AddMonths(-1)
+                    transactions.Add(new Transaction
+                    {
+                        Date = date,
+                        Amount = random.Next(80000, 300000),
+                        Description = $"Thu phí đặt sân ngày {date:dd/MM}",
+                        CategoryId = courtFeeCategory.Id,
+                        CreatedBy = admin.Id,
+                        CreatedDate = date
+                    });
                 }
-            };
+                
+                // Chi phí (1 giao dịch mỗi 7-10 ngày)
+                if (day % random.Next(7, 11) == 0)
+                {
+                    transactions.Add(new Transaction
+                    {
+                        Date = date,
+                        Amount = -random.Next(100000, 500000),
+                        Description = $"Chi phí {(random.Next(2) == 0 ? "sửa chữa thiết bị" : "điện nước")}",
+                        CategoryId = expenseCategory.Id,
+                        CreatedBy = admin.Id,
+                        CreatedDate = date
+                    });
+                }
+                
+                // Đóng góp (1 giao dịch mỗi 15 ngày)
+                if (day % 15 == 0)
+                {
+                    transactions.Add(new Transaction
+                    {
+                        Date = date,
+                        Amount = random.Next(500000, 2000000),
+                        Description = "Quyên góp từ hội viên",
+                        CategoryId = incomeCategory.Id,
+                        CreatedBy = admin.Id,
+                        CreatedDate = date
+                    });
+                }
+            }
             
             context.Transactions.AddRange(transactions);
             await context.SaveChangesAsync();
         }
 
-        // Seed Sample Bookings
+        // Seed Sample Bookings - NHIỀU HƠN
         if (!await context.Bookings.AnyAsync())
         {
-            var members = await context.Members.Where(m => m.Email.Contains("member") || m.Email.Contains("nguyen")).Take(3).ToListAsync();
+            var members = await context.Members.Where(m => !m.Email.Contains("admin") && !m.Email.Contains("treasurer") && !m.Email.Contains("referee")).ToListAsync();
             var courts = await context.Courts.ToListAsync();
             
-            if (members.Count >= 2 && courts.Any())
+            if (members.Count >= 5 && courts.Any())
             {
-                var bookings = new List<Booking>
+                var bookings = new List<Booking>();
+                
+                // Tạo bookings trong 30 ngày qua
+                for (int day = -30; day <= 7; day++)
                 {
-                    new Booking
+                    var date = DateTime.Today.AddDays(day);
+                    
+                    // Mỗi ngày có 3-6 bookings random
+                    var bookingsPerDay = random.Next(3, 7);
+                    
+                    for (int i = 0; i < bookingsPerDay; i++)
                     {
-                        CourtId = courts[0].Id,
-                        MemberId = members[0].Id,
-                        StartTime = DateTime.Today.AddHours(18),
-                        EndTime = DateTime.Today.AddHours(19),
-                        TotalPrice = courts[0].PricePerHour,
-                        Status = BookingStatus.Confirmed,
-                        CreatedDate = DateTime.UtcNow
-                    },
-                    new Booking
-                    {
-                        CourtId = courts.Count > 1 ? courts[1].Id : courts[0].Id,
-                        MemberId = members[1].Id,
-                        StartTime = DateTime.Today.AddDays(1).AddHours(17),
-                        EndTime = DateTime.Today.AddDays(1).AddHours(18),
-                        TotalPrice = courts.Count > 1 ? courts[1].PricePerHour : courts[0].PricePerHour,
-                        Status = BookingStatus.Confirmed,
-                        CreatedDate = DateTime.UtcNow
+                        var court = courts[random.Next(courts.Count)];
+                        var member = members[random.Next(members.Count)];
+                        var startHour = random.Next(6, 21); // 6AM - 9PM
+                        var duration = random.Next(1, 3); // 1-2 giờ
+                        
+                        BookingStatus status;
+                        if (day < 0) // Past bookings
+                        {
+                            // 80% confirmed, 15% completed, 5% cancelled
+                            var statusRoll = random.Next(100);
+                            status = statusRoll < 80 ? BookingStatus.Confirmed : 
+                                    statusRoll < 95 ? BookingStatus.Confirmed : BookingStatus.Cancelled;
+                        }
+                        else if (day == 0) // Today
+                        {
+                            status = startHour < DateTime.Now.Hour ? BookingStatus.Confirmed : BookingStatus.Confirmed;
+                        }
+                        else // Future bookings
+                        {
+                            // 70% confirmed, 30% pending
+                            status = random.Next(100) < 70 ? BookingStatus.Confirmed : BookingStatus.PendingPayment;
+                        }
+                        
+                        bookings.Add(new Booking
+                        {
+                            CourtId = court.Id,
+                            MemberId = member.Id,
+                            StartTime = date.AddHours(startHour),
+                            EndTime = date.AddHours(startHour + duration),
+                            TotalPrice = court.PricePerHour * duration,
+                            Status = status,
+                            CreatedDate = date.AddHours(startHour - random.Next(1, 48)), // Đặt trước 1-48 giờ
+                            CheckInTime = day < 0 && status == BookingStatus.Confirmed ? (DateTime?)date.AddHours(startHour).AddMinutes(-random.Next(5, 30)) : null,
+                            IsCheckedIn = day < 0 && status == BookingStatus.Confirmed
+                        });
                     }
-                };
+                }
                 
                 context.Bookings.AddRange(bookings);
                 await context.SaveChangesAsync();
@@ -321,50 +405,112 @@ public static class DbInitializer
             }
         }
 
-        // Seed Sample Matches
+        // Seed Sample Matches - NHIỀU TRẬN ĐẤU HƠN
         if (!await context.Matches.AnyAsync())
         {
-            var members = await context.Members.Where(m => m.Email.Contains("member") || m.Email.Contains("nguyen") || m.Email.Contains("tran") || m.Email.Contains("le")).Take(4).ToListAsync();
-            if (members.Count >= 4)
+            var members = await context.Members.Where(m => !m.Email.Contains("admin") && !m.Email.Contains("treasurer")).ToListAsync();
+            if (members.Count >= 8)
             {
-                var matches = new List<Match>
+                var matches = new List<Match>();
+                var matchScores = new List<MatchScore>();
+                
+                // Tạo 50 trận đấu trong 60 ngày qua
+                for (int i = 0; i < 50; i++)
                 {
-                    new Match
+                    var daysAgo = random.Next(1, 61);
+                    var matchDate = DateTime.Today.AddDays(-daysAgo);
+                    
+                    // Random format: 60% doubles, 40% singles
+                    var format = random.Next(100) < 60 ? MatchFormat.Doubles : MatchFormat.Singles;
+                    
+                    Match match;
+                    if (format == MatchFormat.Doubles)
                     {
-                        Date = DateTime.Today.AddDays(-1),
-                        IsRanked = true,
-                        MatchFormat = MatchFormat.Doubles,
-                        Team1_Player1Id = members[0].Id,
-                        Team1_Player2Id = members[1].Id,
-                        Team2_Player1Id = members[2].Id,
-                        Team2_Player2Id = members[3].Id,
-                        WinningSide = WinningSide.Team1,
-                        EloChange = 12.5
-                    },
-                    new Match
-                    {
-                        Date = DateTime.Today.AddDays(-2),
-                        IsRanked = true,
-                        MatchFormat = MatchFormat.Singles,
-                        Team1_Player1Id = members[0].Id,
-                        Team2_Player1Id = members[1].Id,
-                        WinningSide = WinningSide.Team2,
-                        EloChange = 10.0
+                        // Pick 4 random players
+                        var players = members.OrderBy(x => random.Next()).Take(4).ToList();
+                        match = new Match
+                        {
+                            Date = matchDate,
+                            IsRanked = random.Next(100) < 80, // 80% ranked
+                            MatchFormat = MatchFormat.Doubles,
+                            Team1_Player1Id = players[0].Id,
+                            Team1_Player2Id = players[1].Id,
+                            Team2_Player1Id = players[2].Id,
+                            Team2_Player2Id = players[3].Id,
+                            WinningSide = random.Next(2) == 0 ? WinningSide.Team1 : WinningSide.Team2,
+                            EloChange = random.Next(8, 16) + random.NextDouble()
+                        };
                     }
-                };
+                    else
+                    {
+                        // Pick 2 random players
+                        var players = members.OrderBy(x => random.Next()).Take(2).ToList();
+                        match = new Match
+                        {
+                            Date = matchDate,
+                            IsRanked = random.Next(100) < 80,
+                            MatchFormat = MatchFormat.Singles,
+                            Team1_Player1Id = players[0].Id,
+                            Team2_Player1Id = players[1].Id,
+                            WinningSide = random.Next(2) == 0 ? WinningSide.Team1 : WinningSide.Team2,
+                            EloChange = random.Next(8, 16) + random.NextDouble()
+                        };
+                    }
+                    
+                    matches.Add(match);
+                }
                 
                 context.Matches.AddRange(matches);
                 await context.SaveChangesAsync();
 
-                // Add match scores
-                var firstMatch = matches[0];
-                var scores = new List<MatchScore>
+                // Add match scores for all matches
+                foreach (var match in matches)
                 {
-                    new MatchScore { MatchId = firstMatch.Id, SetNumber = 1, Team1Score = 11, Team2Score = 7, IsFinalSet = false },
-                    new MatchScore { MatchId = firstMatch.Id, SetNumber = 2, Team1Score = 11, Team2Score = 9, IsFinalSet = true }
-                };
+                    var numSets = random.Next(100) < 70 ? 2 : 3; // 70% best of 2, 30% best of 3
+                    
+                    for (int setNum = 1; setNum <= numSets; setNum++)
+                    {
+                        int team1Score, team2Score;
+                        
+                        if (setNum == numSets) // Final set - winner wins this set
+                        {
+                            if (match.WinningSide == WinningSide.Team1)
+                            {
+                                team1Score = 11;
+                                team2Score = random.Next(5, 10);
+                            }
+                            else
+                            {
+                                team1Score = random.Next(5, 10);
+                                team2Score = 11;
+                            }
+                        }
+                        else // Previous sets - random winner
+                        {
+                            if (random.Next(2) == 0)
+                            {
+                                team1Score = 11;
+                                team2Score = random.Next(5, 10);
+                            }
+                            else
+                            {
+                                team1Score = random.Next(5, 10);
+                                team2Score = 11;
+                            }
+                        }
+                        
+                        matchScores.Add(new MatchScore
+                        {
+                            MatchId = match.Id,
+                            SetNumber = setNum,
+                            Team1Score = team1Score,
+                            Team2Score = team2Score,
+                            IsFinalSet = setNum == numSets
+                        });
+                    }
+                }
                 
-                context.MatchScores.AddRange(scores);
+                context.MatchScores.AddRange(matchScores);
                 await context.SaveChangesAsync();
             }
         }
@@ -408,25 +554,55 @@ public static class DbInitializer
             await context.SaveChangesAsync();
         }
 
-        // Seed Sample Wallet Transactions
+        // Seed Sample Wallet Transactions - NHIỀU HƠN
         var walletTransactions = new List<WalletTransaction>();
         var depositCategory = await context.TransactionCategories.FirstOrDefaultAsync(c => c.Name == "Nạp tiền");
+        var bookingCategory = await context.TransactionCategories.FirstOrDefaultAsync(c => c.Name == "Phí sân");
         
-        if (depositCategory != null)
+        if (depositCategory != null && bookingCategory != null)
         {
-            var members = await context.Members.Where(m => m.Email.Contains("member")).Take(3).ToListAsync();
+            var members = await context.Members.Where(m => !m.Email.Contains("admin") && !m.Email.Contains("treasurer") && !m.Email.Contains("referee")).ToListAsync();
+            
+            // Mỗi member có 3-8 giao dịch ví
             foreach (var member in members)
             {
-                walletTransactions.Add(new WalletTransaction
+                var numTransactions = random.Next(3, 9);
+                
+                for (int i = 0; i < numTransactions; i++)
                 {
-                    Date = DateTime.UtcNow.AddDays(-10),
-                    Amount = 500000,
-                    MemberId = member.Id,
-                    CategoryId = depositCategory.Id,
-                    Type = WalletTransactionType.Deposit,
-                    Description = "Nạp tiền vào ví",
-                    Status = TransactionStatus.Success
-                });
+                    var daysAgo = random.Next(1, 90);
+                    var date = DateTime.UtcNow.AddDays(-daysAgo);
+                    
+                    // 60% deposit, 40% payment for booking
+                    if (random.Next(100) < 60)
+                    {
+                        // Deposit
+                        walletTransactions.Add(new WalletTransaction
+                        {
+                            Date = date,
+                            Amount = random.Next(3, 11) * 100000, // 300k - 1M
+                            MemberId = member.Id,
+                            CategoryId = depositCategory.Id,
+                            Type = WalletTransactionType.Deposit,
+                            Description = "Nạp tiền vào ví",
+                            Status = random.Next(100) < 90 ? TransactionStatus.Success : TransactionStatus.Pending // 90% success
+                        });
+                    }
+                    else
+                    {
+                        // Payment for booking
+                        walletTransactions.Add(new WalletTransaction
+                        {
+                            Date = date,
+                            Amount = -random.Next(70000, 200000),
+                            MemberId = member.Id,
+                            CategoryId = bookingCategory.Id,
+                            Type = WalletTransactionType.PayBooking,
+                            Description = "Thanh toán đặt sân",
+                            Status = TransactionStatus.Success
+                        });
+                    }
+                }
             }
             
             if (walletTransactions.Any())

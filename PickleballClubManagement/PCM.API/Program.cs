@@ -103,6 +103,8 @@ builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<ICourtService, CourtService>();
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 builder.Services.AddScoped<INotificationService, PCM.API.Services.NotificationService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<BackgroundJobService>();
 
 // 7. AutoMapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -184,6 +186,29 @@ using (var scope = app.Services.CreateScope())
 
 // Configure Hangfire Jobs
 var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
-recurringJobManager.AddOrUpdate<IBookingService>("booking-cleanup", x => x.ScanAndCancelExpiredBookingsAsync(), Cron.Minutely);
+
+// Auto-cancel expired pending bookings every 2 minutes
+recurringJobManager.AddOrUpdate<BackgroundJobService>(
+    "cancel-expired-bookings",
+    x => x.CancelExpiredPendingBookings(),
+    "*/2 * * * *");
+
+// Send booking reminders every hour
+recurringJobManager.AddOrUpdate<BackgroundJobService>(
+    "send-booking-reminders",
+    x => x.SendUpcomingBookingReminders(),
+    Cron.Hourly);
+
+// Clean old activity logs daily at 2 AM
+recurringJobManager.AddOrUpdate<BackgroundJobService>(
+    "clean-old-logs",
+    x => x.CleanOldActivityLogs(),
+    Cron.Daily(2));
+
+// Update tournament standings daily at 1 AM
+recurringJobManager.AddOrUpdate<BackgroundJobService>(
+    "update-tournament-standings",
+    x => x.UpdateTournamentStandings(),
+    Cron.Daily(1));
 
 app.Run();

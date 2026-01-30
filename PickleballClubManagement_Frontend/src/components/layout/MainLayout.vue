@@ -3,13 +3,13 @@
     <!-- Sidebar -->
     <aside class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col">
       <div class="h-16 flex items-center px-6 border-b border-slate-100">
-        <span class="text-xl font-bold text-sky-600 tracking-tight">PCM System</span>
+        <span class="text-xl font-bold text-sky-600 tracking-tight">Hệ Thống PCM</span>
       </div>
       
       <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
         <router-link to="/" class="flex items-center px-4 py-3 text-slate-600 rounded-lg hover:bg-sky-50 hover:text-sky-600 transition-colors group" active-class="bg-sky-50 text-sky-600 font-medium">
             <HomeIcon class="w-5 h-5 mr-3 group-hover:text-sky-600" />
-            Dashboard
+            Tổng quan
         </router-link>
         
         <div class="pt-4 pb-2">
@@ -26,6 +26,11 @@
             Đặt sân
         </router-link>
 
+        <router-link v-if="authStore.isAdmin || authStore.isTreasurer" to="/bookings/manage" class="flex items-center px-4 py-3 text-slate-600 rounded-lg hover:bg-sky-50 hover:text-sky-600 transition-colors group" active-class="bg-sky-50 text-sky-600 font-medium">
+            <CalendarIcon class="w-5 h-5 mr-3 group-hover:text-sky-600" />
+            Quản lý Đặt sân
+        </router-link>
+
         <router-link v-if="authStore.isMember" to="/tournaments" class="flex items-center px-4 py-3 text-slate-600 rounded-lg hover:bg-sky-50 hover:text-sky-600 transition-colors group" active-class="bg-sky-50 text-sky-600 font-medium">
             <TrophyIcon class="w-5 h-5 mr-3 group-hover:text-sky-600" />
             Giải đấu
@@ -39,6 +44,11 @@
         <router-link v-if="authStore.isReferee" to="/referee" class="flex items-center px-4 py-3 text-slate-600 rounded-lg hover:bg-sky-50 hover:text-sky-600 transition-colors group" active-class="bg-sky-50 text-sky-600 font-medium">
             <ClipboardDocumentCheckIcon class="w-5 h-5 mr-3 group-hover:text-sky-600" />
             Trọng tài
+        </router-link>
+
+        <router-link v-if="authStore.isReferee || authStore.isAdmin" to="/referee/manage" class="flex items-center px-4 py-3 text-slate-600 rounded-lg hover:bg-sky-50 hover:text-sky-600 transition-colors group" active-class="bg-sky-50 text-sky-600 font-medium">
+            <ClipboardDocumentCheckIcon class="w-5 h-5 mr-3 group-hover:text-sky-600" />
+            Quản lý Trận đấu
         </router-link>
 
         <router-link v-if="authStore.isAdmin" to="/courts" class="flex items-center px-4 py-3 text-slate-600 rounded-lg hover:bg-sky-50 hover:text-sky-600 transition-colors group" active-class="bg-sky-50 text-sky-600 font-medium">

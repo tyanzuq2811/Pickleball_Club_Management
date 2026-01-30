@@ -10,6 +10,24 @@
         Thêm Sân Mới
       </button>
     </div>
+    <!-- Search Bar -->
+    <div class="mb-6">
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="Tìm kiếm sân theo tên hoặc mô tả..."
+        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+      />
+    </div>
+    <!-- Search Bar -->
+    <div class="mb-6">
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="Tìm kiếm sân theo tên..."
+        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+      />
+    </div>
 
     <!-- Loading -->
     <div v-if="courtStore.loading" class="text-center py-8">
@@ -24,7 +42,7 @@
     <!-- Court List -->
     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <div
-        v-for="court in courtStore.courts"
+        v-for="court in filteredCourts"
         :key="court.id"
         class="bg-white p-4 rounded-lg shadow hover:shadow-lg transition-shadow"
       >
@@ -47,14 +65,22 @@
         <div v-if="isAdmin" class="flex gap-2 mt-4">
           <button
             @click="editCourt(court)"
-            class="flex-1 bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 text-sm"
+            class="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+            title="Chỉnh sửa"
           >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
             Sửa
           </button>
           <button
             @click="confirmDelete(court)"
-            class="flex-1 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm"
+            class="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
+            title="Xóa"
           >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
             Xóa
           </button>
         </div>
@@ -140,6 +166,7 @@ const authStore = useAuthStore()
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const selectedCourt = ref(null)
+const searchQuery = ref('')
 
 const formData = ref({
   name: '',
@@ -149,6 +176,17 @@ const formData = ref({
 })
 
 const isAdmin = computed(() => authStore.user?.role === 'Admin')
+
+const filteredCourts = computed(() => {
+  if (!searchQuery.value) {
+    return courtStore.courts;
+  }
+  const query = searchQuery.value.toLowerCase();
+  return courtStore.courts.filter(court => 
+    court.name.toLowerCase().includes(query) ||
+    court.description?.toLowerCase().includes(query)
+  );
+})
 
 onMounted(() => {
   courtStore.fetchCourts()

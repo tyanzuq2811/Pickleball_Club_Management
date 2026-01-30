@@ -10,5 +10,6 @@ public interface IRedisService
     Task<long> SetRemoveAsync(string key, string value);
     Task<IEnumerable<string>> SetMembersAsync(string key);
     Task<bool> SortedSetAddAsync(string key, string member, double score);
+    Task<bool> SortedSetRemoveAsync(string key, string member);
     Task<IEnumerable<(string member, double score)>> SortedSetRangeByRankWithScoresAsync(string key, long start = 0, long stop = -1, bool descending = true);
 }

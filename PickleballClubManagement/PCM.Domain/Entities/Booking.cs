@@ -18,6 +18,8 @@ public class Booking
     public BookingStatus Status { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+    public DateTime? CheckInTime { get; set; }
+    public bool IsCheckedIn { get; set; } = false;
 
     [Timestamp]
     public byte[] RowVersion { get; set; } = null!;

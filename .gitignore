@@ -4,3 +4,11 @@ obj/
 *.dll
 *.exe
 *.pdb
+# Frontend env
+PickleballClubManagement_Frontend/.env
+
+# Node
+node_modules/
+
+# Logs
+*.log

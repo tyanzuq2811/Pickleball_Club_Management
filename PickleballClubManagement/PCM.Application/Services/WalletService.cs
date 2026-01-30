@@ -107,6 +107,19 @@ public class WalletService : IWalletService
         return ApiResponse<bool>.SuccessResponse(true, "Deposit approved");
     }
 
+    public async Task<ApiResponse<bool>> RejectDepositAsync(int id)
+    {
+        var transaction = await _unitOfWork.WalletTransactions.GetByIdAsync(id);
+        if (transaction == null) return ApiResponse<bool>.ErrorResponse("Transaction not found");
+        if (transaction.Status != TransactionStatus.Pending) return ApiResponse<bool>.ErrorResponse("Transaction is not pending");
+
+        transaction.Status = TransactionStatus.Failed;
+        _unitOfWork.WalletTransactions.Update(transaction);
+        await _unitOfWork.SaveChangesAsync();
+
+        return ApiResponse<bool>.SuccessResponse(true, "Deposit rejected");
+    }
+
     public async Task<ApiResponse<bool>> PayBookingAsync(int memberId, decimal amount, string bookingReference)
     {
         var member = await _unitOfWork.Members.GetByIdAsync(memberId);

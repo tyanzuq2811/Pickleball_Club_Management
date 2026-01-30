@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <div>
-      <h2 class="text-2xl font-bold text-slate-800">Dashboard - Thủ quỹ</h2>
+      <h2 class="text-2xl font-bold text-slate-800">Tổng quan - Thủ quỹ</h2>
       <p class="text-slate-600 mt-1">Quản lý tài chính câu lạc bộ</p>
     </div>
 

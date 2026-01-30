@@ -521,4 +521,27 @@ public class TournamentService : ITournamentService
 
         return ApiResponse<List<MatchDto>>.SuccessResponse(dtos);
     }
+
+    public async Task<ApiResponse<List<object>>> GetLiveMatchesAsync()
+    {
+        // Lấy các giải đấu đang diễn ra
+        var tournaments = await _unitOfWork.Tournaments.FindAsync(t => t.Status == TournamentStatus.Ongoing);
+        var result = new List<object>();
+
+        foreach (var tournament in tournaments)
+        {
+            result.Add(new
+            {
+                tournamentId = tournament.Id,
+                tournamentTitle = tournament.Title,
+                type = tournament.Type.ToString(),
+                gameMode = tournament.GameMode.ToString(),
+                teamAScore = tournament.CurrentScore_TeamA,
+                teamBScore = tournament.CurrentScore_TeamB,
+                targetWins = tournament.Config_TargetWins
+            });
+        }
+
+        return ApiResponse<List<object>>.SuccessResponse(result);
+    }
 }

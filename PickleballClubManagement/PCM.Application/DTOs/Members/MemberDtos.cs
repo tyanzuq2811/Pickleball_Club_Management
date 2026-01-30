@@ -25,14 +25,19 @@ public class MemberCreateDto
     public string PhoneNumber { get; set; } = string.Empty;
     public DateTime? DateOfBirth { get; set; }
     public double RankELO { get; set; } = 1200;
+    public decimal WalletBalance { get; set; } = 0;
 }
 
 public class MemberUpdateDto
 {
     public string? FullName { get; set; }
+    public string? Email { get; set; }
     public string? PhoneNumber { get; set; }
     public DateTime? DateOfBirth { get; set; }
     public string? AvatarUrl { get; set; }
+    public double? RankELO { get; set; }
+    public decimal? WalletBalance { get; set; }
+    public bool? IsActive { get; set; }
 }
 
 public class MemberRankingDto

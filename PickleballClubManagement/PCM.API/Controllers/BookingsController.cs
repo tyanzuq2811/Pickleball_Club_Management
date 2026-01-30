@@ -122,4 +122,52 @@ public class BookingsController : ControllerBase
         var result = await _bookingService.GetAvailableSlotsAsync(courtId, date);
         return result.Success ? Ok(result) : BadRequest(result);
     }
+
+    [HttpPost("{id}/pay")]
+    [Authorize(Roles = "Member")]
+    public async Task<ActionResult<ApiResponse<bool>>> PayBooking(int id)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+            
+        var member = await _memberService.GetByUserIdAsync(userId);
+        if (member?.Data == null)
+            return Unauthorized(ApiResponse<bool>.ErrorResponse("Không tìm thấy thông tin thành viên"));
+
+        var result = await _bookingService.PayBookingAsync(id, member.Data.Id);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [HttpDelete("{id}")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<bool>>> DeleteBooking(int id)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        var member = await _memberService.GetByUserIdAsync(userId);
+        if (member?.Data == null)
+            return Unauthorized(ApiResponse<bool>.ErrorResponse("Không tìm thấy thông tin thành viên"));
+
+        var result = await _bookingService.DeleteAsync(id, member.Data.Id);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    [HttpPost("{id}/check-in")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<bool>>> CheckIn(int id)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        var member = await _memberService.GetByUserIdAsync(userId);
+        if (member?.Data == null)
+            return Unauthorized(ApiResponse<bool>.ErrorResponse("Không tìm thấy thông tin thành viên"));
+
+        var result = await _bookingService.CheckInAsync(id, member.Data.Id);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
 }

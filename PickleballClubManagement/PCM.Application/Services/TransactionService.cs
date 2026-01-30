@@ -43,6 +43,34 @@ public class TransactionService : ITransactionService
         return ApiResponse<TransactionDto>.SuccessResponse(res, "Transaction created");
     }
 
+    public async Task<ApiResponse<TransactionDto>> UpdateAsync(int id, TransactionCreateDto dto)
+    {
+        var t = await _unitOfWork.Transactions.GetByIdAsync(id);
+        if (t == null) return ApiResponse<TransactionDto>.ErrorResponse("Transaction not found");
+        
+        t.Date = dto.Date;
+        t.Amount = dto.Amount;
+        t.Description = dto.Description;
+        t.CategoryId = dto.CategoryId;
+        
+        _unitOfWork.Transactions.Update(t);
+        await _unitOfWork.SaveChangesAsync();
+        
+        var res = new TransactionDto { Id = t.Id, Date = t.Date, Amount = t.Amount, Description = t.Description, CategoryId = t.CategoryId, CreatedBy = t.CreatedBy };
+        return ApiResponse<TransactionDto>.SuccessResponse(res, "Transaction updated");
+    }
+
+    public async Task<ApiResponse<bool>> DeleteAsync(int id)
+    {
+        var t = await _unitOfWork.Transactions.GetByIdAsync(id);
+        if (t == null) return ApiResponse<bool>.ErrorResponse("Transaction not found");
+        
+        _unitOfWork.Transactions.Remove(t);
+        await _unitOfWork.SaveChangesAsync();
+        
+        return ApiResponse<bool>.SuccessResponse(true, "Transaction deleted");
+    }
+
     public async Task<ApiResponse<TransactionSummaryDto>> GetSummaryAsync(DateTime? startDate = null, DateTime? endDate = null)
     {
         var list = await _unitOfWork.Transactions.GetAllAsync();
@@ -93,5 +121,31 @@ public class TransactionService : ITransactionService
         _unitOfWork.TransactionCategories.Remove(cat);
         await _unitOfWork.SaveChangesAsync();
         return ApiResponse<bool>.SuccessResponse(true, "Category deleted");
+    }
+
+    public async Task<byte[]> ExportToExcelAsync(DateTime? startDate = null, DateTime? endDate = null)
+    {
+        // TODO: Implement Excel export using EPPlus or ClosedXML
+        // For now, return dummy data
+        var list = await _unitOfWork.Transactions.GetAllAsync();
+        var filtered = list.AsQueryable();
+        if (startDate.HasValue) filtered = filtered.Where(t => t.Date >= startDate.Value);
+        if (endDate.HasValue) filtered = filtered.Where(t => t.Date <= endDate.Value);
+        
+        // Return empty byte array as placeholder
+        return System.Text.Encoding.UTF8.GetBytes("Excel export not implemented yet");
+    }
+
+    public async Task<byte[]> ExportToPdfAsync(DateTime? startDate = null, DateTime? endDate = null)
+    {
+        // TODO: Implement PDF export using iTextSharp or similar
+        // For now, return dummy data
+        var list = await _unitOfWork.Transactions.GetAllAsync();
+        var filtered = list.AsQueryable();
+        if (startDate.HasValue) filtered = filtered.Where(t => t.Date >= startDate.Value);
+        if (endDate.HasValue) filtered = filtered.Where(t => t.Date <= endDate.Value);
+        
+        // Return empty byte array as placeholder
+        return System.Text.Encoding.UTF8.GetBytes("PDF export not implemented yet");
     }
 }

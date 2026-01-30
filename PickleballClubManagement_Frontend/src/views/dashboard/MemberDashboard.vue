@@ -22,7 +22,7 @@
       <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-slate-600">ELO Rating</p>
+            <p class="text-sm font-medium text-slate-600">Xếp hạng ELO</p>
             <p class="text-2xl font-bold text-slate-800 mt-2">{{ stats.rankELO }}</p>
           </div>
           <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">

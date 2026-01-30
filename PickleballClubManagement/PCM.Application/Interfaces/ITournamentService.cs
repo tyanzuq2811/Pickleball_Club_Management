@@ -18,4 +18,5 @@ public interface ITournamentService
     Task<ApiResponse<bool>> GenerateBracketAsync(int tournamentId);
     Task<ApiResponse<TournamentBracketDto>> GetBracketAsync(int tournamentId);
     Task<ApiResponse<List<MatchDto>>> GetAllMatchesAsync();
+    Task<ApiResponse<List<object>>> GetLiveMatchesAsync();
 }

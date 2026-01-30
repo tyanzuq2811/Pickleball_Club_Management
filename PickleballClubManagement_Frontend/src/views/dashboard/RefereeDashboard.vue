@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <div>
-      <h2 class="text-2xl font-bold text-slate-800">Dashboard - Trọng tài</h2>
+      <h2 class="text-2xl font-bold text-slate-800">Tổng quan - Trọng tài</h2>
       <p class="text-slate-600 mt-1">Quản lý trận đấu và điểm số</p>
     </div>
 

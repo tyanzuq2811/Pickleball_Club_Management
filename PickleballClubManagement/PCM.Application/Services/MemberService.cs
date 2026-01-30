@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PCM.Application.DTOs.Common;
 using PCM.Application.DTOs.Members;
 using PCM.Application.Interfaces;
+using PCM.Domain.Entities;
 using PCM.Domain.Interfaces;
 
 namespace PCM.Application.Services;
@@ -204,6 +205,9 @@ public class MemberService : IMemberService
             if (!string.IsNullOrWhiteSpace(dto.FullName))
                 member.FullName = dto.FullName;
 
+            if (!string.IsNullOrWhiteSpace(dto.Email))
+                member.Email = dto.Email;
+
             if (!string.IsNullOrWhiteSpace(dto.PhoneNumber))
                 member.PhoneNumber = dto.PhoneNumber;
 
@@ -212,6 +216,16 @@ public class MemberService : IMemberService
 
             if (!string.IsNullOrWhiteSpace(dto.AvatarUrl))
                 member.AvatarUrl = dto.AvatarUrl;
+
+            // Admin có thể cập nhật các trường này
+            if (dto.RankELO.HasValue)
+                member.RankELO = dto.RankELO.Value;
+
+            if (dto.WalletBalance.HasValue)
+                member.WalletBalance = dto.WalletBalance.Value;
+
+            if (dto.IsActive.HasValue)
+                member.IsActive = dto.IsActive.Value;
 
             member.ModifiedDate = DateTime.UtcNow;
 
@@ -240,6 +254,92 @@ public class MemberService : IMemberService
         catch (Exception ex)
         {
             return ApiResponse<MemberDto>.ErrorResponse($"Error: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse<MemberDto>> CreateAsync(MemberCreateDto dto)
+    {
+        try
+        {
+            // Kiểm tra email đã tồn tại chưa
+            var existingMember = await _unitOfWork.Members.FirstOrDefaultAsync(m => m.Email == dto.Email);
+            if (existingMember != null)
+                return ApiResponse<MemberDto>.ErrorResponse("Email đã được sử dụng");
+
+            var member = new Member
+            {
+                FullName = dto.FullName,
+                Email = dto.Email,
+                PhoneNumber = dto.PhoneNumber,
+                DateOfBirth = dto.DateOfBirth,
+                RankELO = dto.RankELO > 0 ? dto.RankELO : 1200,
+                WalletBalance = dto.WalletBalance,
+                IsActive = true,
+                JoinDate = DateTime.UtcNow,
+                CreatedDate = DateTime.UtcNow,
+                UserId = Guid.NewGuid().ToString() // Generate unique ID, sẽ được cập nhật khi user đăng ký
+            };
+
+            await _unitOfWork.Members.AddAsync(member);
+            await _unitOfWork.SaveChangesAsync();
+
+            var resultDto = new MemberDto
+            {
+                Id = member.Id,
+                UserId = member.UserId,
+                FullName = member.FullName,
+                Email = member.Email,
+                PhoneNumber = member.PhoneNumber,
+                DateOfBirth = member.DateOfBirth,
+                JoinDate = member.JoinDate,
+                RankELO = member.RankELO,
+                WalletBalance = member.WalletBalance,
+                AvatarUrl = member.AvatarUrl,
+                IsActive = member.IsActive,
+                TotalMatches = member.TotalMatches,
+                WinMatches = member.WinMatches
+            };
+
+            return ApiResponse<MemberDto>.SuccessResponse(resultDto, "Tạo hội viên thành công");
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse<MemberDto>.ErrorResponse($"Lỗi: {ex.Message}");
+        }
+    }
+
+    public async Task<ApiResponse<bool>> DeleteAsync(int id)
+    {
+        try
+        {
+            var member = await _unitOfWork.Members.GetByIdAsync(id);
+            
+            if (member == null)
+                return ApiResponse<bool>.ErrorResponse("Không tìm thấy hội viên");
+
+            // Soft delete - chỉ đánh dấu là không hoạt động
+            member.IsActive = false;
+            member.ModifiedDate = DateTime.UtcNow;
+
+            _unitOfWork.Members.Update(member);
+            await _unitOfWork.SaveChangesAsync();
+
+            // Xóa khỏi Redis leaderboard
+            try
+            {
+                await _redisService.SortedSetRemoveAsync("leaderboard:elo", id.ToString());
+                await _redisService.DeleteAsync("leaderboard:top:10");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Redis delete failed: {ex.Message}");
+            }
+
+            return ApiResponse<bool>.SuccessResponse(true, "Xóa hội viên thành công");
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse<bool>.ErrorResponse($"Lỗi: {ex.Message}");
         }
     }
 

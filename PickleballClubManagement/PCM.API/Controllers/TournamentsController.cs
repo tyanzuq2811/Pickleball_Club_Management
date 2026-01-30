@@ -29,12 +29,23 @@ public class TournamentsController : ControllerBase
     }
 
     /// <summary>
-    /// L?y danh s�ch gi?i ??u
+    /// Lấy danh sách giải đấu
     /// </summary>
     [HttpGet]
     public async Task<ActionResult<ApiResponse<PagedResult<TournamentDto>>>> GetAllTournaments([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
         var result = await _tournamentService.GetAllAsync(pageNumber, pageSize);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    /// <summary>
+    /// Lấy các trận đấu giải đấu đang diễn ra
+    /// </summary>
+    [HttpGet("live-matches")]
+    [AllowAnonymous]
+    public async Task<ActionResult<ApiResponse<List<object>>>> GetLiveMatches()
+    {
+        var result = await _tournamentService.GetLiveMatchesAsync();
         return result.Success ? Ok(result) : BadRequest(result);
     }
 

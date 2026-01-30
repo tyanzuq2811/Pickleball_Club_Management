@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <div>
-      <h2 class="text-2xl font-bold text-slate-800">Dashboard - Quản trị viên</h2>
+      <h2 class="text-2xl font-bold text-slate-800">Tổng quan - Quản trị viên</h2>
       <p class="text-slate-600 mt-1">Tổng quan hệ thống quản lý CLB Pickleball</p>
     </div>
 

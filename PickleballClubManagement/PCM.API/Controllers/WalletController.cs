@@ -54,4 +54,12 @@ public class WalletController : ControllerBase
         var result = await _walletService.ApproveDepositAsync(id);
         return Ok(result);
     }
+
+    [HttpPost("reject/{id}")]
+    [Authorize(Roles = "Admin,Treasurer")]
+    public async Task<ActionResult<ApiResponse<bool>>> RejectDeposit(int id)
+    {
+        var result = await _walletService.RejectDepositAsync(id);
+        return Ok(result);
+    }
 }

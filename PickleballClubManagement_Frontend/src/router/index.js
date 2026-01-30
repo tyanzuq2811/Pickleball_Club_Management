@@ -4,14 +4,20 @@ import Login from '@/views/auth/Login.vue'
 import MainLayout from '@/components/layout/MainLayout.vue'
 import DashboardRouter from '@/views/DashboardRouter.vue'
 import BookingCalendar from '@/views/bookings/BookingCalendar.vue'
+import BookingManagement from '@/views/bookings/BookingManagement.vue'
 import TournamentList from '@/views/tournaments/TournamentList.vue'
 import TournamentBracket from '@/views/tournaments/TournamentBracket.vue'
 import MyWallet from '@/views/wallet/MyWallet.vue'
 import TransactionManagement from '@/views/treasury/TransactionManagement.vue'
 import MatchList from '@/views/referee/MatchList.vue'
+import MatchManagement from '@/views/referee/MatchManagement.vue'
 import MemberList from '@/views/members/MemberList.vue'
 import CourtList from '@/views/courts/CourtList.vue'
 import NewsList from '@/views/news/NewsList.vue'
+import MyBookings from '@/views/bookings/MyBookings.vue'
+import LiveScoreboard from '@/views/public/LiveScoreboard.vue'
+import ActivityLogs from '@/views/admin/ActivityLogs.vue'
+import AdvancedDashboard from '@/views/admin/AdvancedDashboard.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,6 +27,11 @@ const router = createRouter({
       name: 'login',
       component: Login,
       meta: { guest: true }
+    },
+    {
+      path: '/scoreboard',
+      name: 'scoreboard',
+      component: LiveScoreboard
     },
     {
       path: '/',
@@ -37,6 +48,18 @@ const router = createRouter({
           name: 'bookings',
           component: BookingCalendar,
           meta: { roles: ['Member'] }
+        },
+        {
+          path: 'my-bookings',
+          name: 'my-bookings',
+          component: MyBookings,
+          meta: { roles: ['Member'] }
+        },
+        {
+          path: 'bookings/manage',
+          name: 'bookings-manage',
+          component: BookingManagement,
+          meta: { roles: ['Admin', 'Treasurer'] }
         },
         {
           path: 'tournaments',
@@ -69,6 +92,12 @@ const router = createRouter({
           meta: { roles: ['Referee'] }
         },
         {
+          path: 'referee/manage',
+          name: 'referee-manage',
+          component: MatchManagement,
+          meta: { roles: ['Referee', 'Admin'] }
+        },
+        {
           path: 'members',
           name: 'members',
           component: MemberList,
@@ -85,6 +114,18 @@ const router = createRouter({
           name: 'news',
           component: NewsList,
           meta: { roles: ['Admin'] }
+        },
+        {
+          path: 'activity-logs',
+          name: 'activity-logs',
+          component: ActivityLogs,
+          meta: { roles: ['Admin'] }
+        },
+        {
+          path: 'admin/dashboard',
+          name: 'admin-dashboard',
+          component: AdvancedDashboard,
+          meta: { roles: ['Admin', 'Treasurer'] }
         }
       ]
     }

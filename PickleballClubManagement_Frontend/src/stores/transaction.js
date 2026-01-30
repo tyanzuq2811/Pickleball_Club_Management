@@ -119,6 +119,25 @@ export const useTransactionStore = defineStore('transaction', {
             }
         },
         
+        async updateTransaction(id, transactionData) {
+            const toast = useToast();
+            this.loading = true;
+            try {
+                const response = await axiosClient.put(`/transactions/${id}`, transactionData);
+                if (response.data.success) {
+                    await this.fetchTransactions();
+                    return true;
+                }
+                toast.error(response.data.message || 'Cập nhật giao dịch thất bại');
+                return false;
+            } catch (error) {
+                toast.error(error.response?.data?.message || 'Lỗi khi cập nhật giao dịch');
+                return false;
+            } finally {
+                this.loading = false;
+            }
+        },
+        
         async deleteTransaction(id) {
             this.loading = true;
             try {
@@ -164,6 +183,20 @@ export const useTransactionStore = defineStore('transaction', {
             } catch (error) {
                 const msg = error.response?.data?.message || "Duyệt thất bại";
                 toast.error(msg);
+                return false;
+            }
+        },
+        async rejectDeposit(id) {
+            const toast = useToast();
+            try {
+                const response = await axiosClient.post(`/wallet/reject/${id}`);
+                if (response.data.success) {
+                    return true;
+                }
+                toast.error(response.data.message || "Từ chối thất bại");
+                return false;
+            } catch (error) {
+                toast.error(error.response?.data?.message || "Lỗi khi từ chối");
                 return false;
             }
         }

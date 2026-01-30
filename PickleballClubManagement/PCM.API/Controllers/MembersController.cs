@@ -77,6 +77,28 @@ public class MembersController : ControllerBase
     }
 
     /// <summary>
+    /// Tạo hội viên mới (Admin only)
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<MemberDto>>> CreateMember([FromBody] MemberCreateDto dto)
+    {
+        var result = await _memberService.CreateAsync(dto);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    /// <summary>
+    /// Xóa hội viên (Admin only)
+    /// </summary>
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<bool>>> DeleteMember(int id)
+    {
+        var result = await _memberService.DeleteAsync(id);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+    /// <summary>
     /// Lấy BXH Top Ranking
     /// </summary>
     [HttpGet("top-ranking")]

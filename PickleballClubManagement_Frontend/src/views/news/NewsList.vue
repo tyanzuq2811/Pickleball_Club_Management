@@ -11,12 +11,22 @@
       </button>
     </div>
 
+    <!-- Search Bar -->
+    <div class="mb-6">
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="Tìm kiếm tin tức theo tiêu đề hoặc tóm tắt..."
+        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+      />
+    </div>
+
     <!-- Pinned News -->
-    <div v-if="newsStore.pinnedNews.length > 0" class="mb-8">
+    <div v-if="filteredPinnedNews.length > 0" class="mb-8">
       <h2 class="text-xl font-semibold mb-4">📌 Tin Ghim</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div
-          v-for="news in newsStore.pinnedNews"
+          v-for="news in filteredPinnedNews"
           :key="news.id"
           class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg shadow"
         >
@@ -27,15 +37,24 @@
             <div class="flex gap-2">
               <button
                 @click="viewNews(news)"
-                class="text-blue-600 hover:underline"
+                class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-xs font-medium transition-all duration-200 hover:shadow-md"
+                title="Xem chi tiết"
               >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
                 Xem chi tiết
               </button>
               <button
                 v-if="isAdmin"
                 @click="unpinNews(news.id)"
-                class="text-yellow-600 hover:underline"
+                class="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg text-xs font-medium transition-all duration-200 hover:shadow-md"
+                title="Bỏ ghim"
               >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
                 Bỏ ghim
               </button>
             </div>
@@ -59,7 +78,7 @@
       <h2 class="text-xl font-semibold mb-4">Tất cả tin tức</h2>
       <div class="space-y-4">
         <div
-          v-for="news in newsStore.newsList"
+          v-for="news in filteredNewsList"
           :key="news.id"
           class="bg-white p-4 rounded-lg shadow hover:shadow-lg transition-shadow"
         >
@@ -75,28 +94,42 @@
             <div class="flex flex-col gap-2 ml-4">
               <button
                 @click="viewNews(news)"
-                class="text-blue-600 hover:underline text-sm"
+                class="inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-xs font-medium transition-all duration-200 hover:shadow-md"
+                title="Xem chi tiết"
               >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
                 Xem
               </button>
               <button
                 v-if="isAdmin && !news.isPinned"
                 @click="pinNews(news.id)"
-                class="text-yellow-600 hover:underline text-sm"
+                class="inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-lg text-xs font-medium transition-all duration-200 hover:shadow-md"
+                title="Ghim tin này"
               >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                </svg>
                 Ghim
               </button>
               <button
                 v-if="isAdmin"
                 @click="editNews(news)"
-                class="text-green-600 hover:underline text-sm"
+                class="inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg text-xs font-medium transition-all duration-200 hover:shadow-md"
+                title="Chỉnh sửa"
               >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
                 Sửa
               </button>
               <button
                 v-if="isAdmin"
                 @click="confirmDelete(news)"
-                class="text-red-600 hover:underline text-sm"
+                class="inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-medium transition-all duration-200 hover:shadow-md"
+                title="Xóa tin này"
               >
                 Xóa
               </button>
@@ -217,6 +250,7 @@ const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const showViewModal = ref(false)
 const selectedNews = ref(null)
+const searchQuery = ref('')
 
 const formData = ref({
   title: '',
@@ -225,6 +259,28 @@ const formData = ref({
 })
 
 const isAdmin = computed(() => authStore.user?.role === 'Admin')
+
+const filteredPinnedNews = computed(() => {
+  if (!searchQuery.value) {
+    return newsStore.pinnedNews;
+  }
+  const query = searchQuery.value.toLowerCase();
+  return newsStore.pinnedNews.filter(news => 
+    news.title.toLowerCase().includes(query) ||
+    news.summary?.toLowerCase().includes(query)
+  );
+})
+
+const filteredNewsList = computed(() => {
+  if (!searchQuery.value) {
+    return newsStore.newsList;
+  }
+  const query = searchQuery.value.toLowerCase();
+  return newsStore.newsList.filter(news => 
+    news.title.toLowerCase().includes(query) ||
+    news.summary?.toLowerCase().includes(query)
+  );
+})
 
 onMounted(() => {
   newsStore.fetchNews()

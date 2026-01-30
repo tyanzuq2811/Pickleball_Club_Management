@@ -9,5 +9,6 @@ public interface IWalletService
     Task<ApiResponse<bool>> RequestDepositAsync(string userId, decimal amount);
     Task<ApiResponse<List<WalletTransactionDto>>> GetPendingDepositsAsync();
     Task<ApiResponse<bool>> ApproveDepositAsync(int id);
+    Task<ApiResponse<bool>> RejectDepositAsync(int id);
     Task<ApiResponse<bool>> PayBookingAsync(int memberId, decimal amount, string bookingReference);
 }

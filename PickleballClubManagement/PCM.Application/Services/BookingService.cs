@@ -266,4 +266,57 @@ public class BookingService : IBookingService
             await _unitOfWork.SaveChangesAsync();
         }
     }
+
+    public async Task<ApiResponse<bool>> PayBookingAsync(int bookingId, int memberId)
+    {
+        var booking = await _unitOfWork.Bookings.GetByIdAsync(bookingId);
+        if (booking == null) return ApiResponse<bool>.ErrorResponse("Booking not found");
+        if (booking.MemberId != memberId) return ApiResponse<bool>.ErrorResponse("Unauthorized");
+        if (booking.Status != BookingStatus.PendingPayment) return ApiResponse<bool>.ErrorResponse("Booking is not pending payment");
+
+        var paymentResult = await _walletService.PayBookingAsync(memberId, booking.TotalPrice, booking.Id.ToString());
+        if (!paymentResult.Success)
+            return ApiResponse<bool>.ErrorResponse($"Payment failed: {paymentResult.Message}");
+
+        booking.Status = BookingStatus.Confirmed;
+        _unitOfWork.Bookings.Update(booking);
+        await _unitOfWork.SaveChangesAsync();
+
+        return ApiResponse<bool>.SuccessResponse(true, "Payment successful");
+    }
+
+    public async Task<ApiResponse<bool>> DeleteAsync(int bookingId, int memberId)
+    {
+        var booking = await _unitOfWork.Bookings.GetByIdAsync(bookingId);
+        if (booking == null) return ApiResponse<bool>.ErrorResponse("Booking not found");
+        if (booking.MemberId != memberId) return ApiResponse<bool>.ErrorResponse("Unauthorized");
+        if (booking.Status == BookingStatus.Confirmed) return ApiResponse<bool>.ErrorResponse("Cannot delete confirmed booking. Please cancel it first.");
+
+        _unitOfWork.Bookings.Remove(booking);
+        await _unitOfWork.SaveChangesAsync();
+
+        return ApiResponse<bool>.SuccessResponse(true, "Booking deleted");
+    }
+
+    public async Task<ApiResponse<bool>> CheckInAsync(int bookingId, int memberId)
+    {
+        var booking = await _unitOfWork.Bookings.GetByIdAsync(bookingId);
+        if (booking == null) return ApiResponse<bool>.ErrorResponse("Booking not found");
+        if (booking.MemberId != memberId) return ApiResponse<bool>.ErrorResponse("Unauthorized");
+        if (booking.Status != BookingStatus.Confirmed) return ApiResponse<bool>.ErrorResponse("Booking is not confirmed");
+        if (booking.IsCheckedIn) return ApiResponse<bool>.ErrorResponse("Already checked in");
+
+        // Check if within check-in window (30 minutes before start time)
+        var now = DateTime.UtcNow;
+        var checkInWindow = booking.StartTime.AddMinutes(-30);
+        if (now < checkInWindow) return ApiResponse<bool>.ErrorResponse("Too early to check in. Check-in opens 30 minutes before booking time.");
+        if (now > booking.EndTime) return ApiResponse<bool>.ErrorResponse("Booking time has passed");
+
+        booking.IsCheckedIn = true;
+        booking.CheckInTime = now;
+        _unitOfWork.Bookings.Update(booking);
+        await _unitOfWork.SaveChangesAsync();
+
+        return ApiResponse<bool>.SuccessResponse(true, "Checked in successfully");
+    }
 }

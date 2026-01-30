@@ -62,6 +62,11 @@ public class RedisService : IRedisService
         return await _db.SortedSetAddAsync(key, member, score);
     }
 
+    public async Task<bool> SortedSetRemoveAsync(string key, string member)
+    {
+        return await _db.SortedSetRemoveAsync(key, member);
+    }
+
     public async Task<IEnumerable<(string member, double score)>> SortedSetRangeByRankWithScoresAsync(
         string key, long start = 0, long stop = -1, bool descending = true)
     {
