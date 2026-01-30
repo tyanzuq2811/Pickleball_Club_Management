@@ -5,7 +5,7 @@
       <div class="flex space-x-2">
         <input v-model="searchQuery" @input="handleSearch" type="text" placeholder="Tìm kiếm theo tên, email..." 
                class="border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 w-64">
-        <button @click="showCreateModal = true" class="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors font-medium text-sm">
+        <button v-if="authStore.isAdmin" @click="showCreateModal = true" class="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors font-medium text-sm">
           + Thêm hội viên
         </button>
       </div>
@@ -54,7 +54,7 @@
                   </svg>
                   Xem
                 </button>
-                <button @click="editMember(member)" 
+                <button v-if="authStore.isAdmin" @click="editMember(member)" 
                         class="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg text-xs font-medium transition-all duration-200 hover:shadow-md" 
                         title="Chỉnh sửa">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,7 +62,7 @@
                   </svg>
                   Sửa
                 </button>
-                <button @click="deleteMember(member.id)" 
+                <button v-if="authStore.isAdmin" @click="deleteMember(member)" 
                         class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-medium transition-all duration-200 hover:shadow-md" 
                         title="Xóa">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,21 +180,52 @@
         </div>
       </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-xl max-w-sm w-full mx-4">
+        <div class="p-6">
+          <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-slate-800 text-center mb-2">Xác nhận xóa hội viên</h3>
+          <p class="text-sm text-slate-600 text-center mb-6">
+            Bạn có chắc chắn muốn xóa hội viên <strong class="text-slate-800">{{ deletingMember?.fullName }}</strong>? Hành động này không thể hoàn tác.
+          </p>
+          <div class="flex gap-3">
+            <button @click="cancelDelete" class="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors">
+              Hủy
+            </button>
+            <button @click="confirmDelete" :disabled="deleting" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors disabled:opacity-50">
+              <span v-if="deleting">Đang xóa...</span>
+              <span v-else>Xóa</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useMemberStore } from '@/stores/member';
+import { useAuthStore } from '@/stores/auth';
 import { useToast } from 'vue-toastification';
 
 const memberStore = useMemberStore();
+const authStore = useAuthStore();
 const toast = useToast();
 const searchQuery = ref('');
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const showDetailModal = ref(false);
+const showDeleteModal = ref(false);
 const selectedMember = ref(null);
+const deletingMember = ref(null);
+const deleting = ref(false);
 
 const formData = ref({
   fullName: '',
@@ -232,12 +263,29 @@ const editMember = (member) => {
   showEditModal.value = true;
 };
 
-const deleteMember = async (id) => {
-  if (confirm('Xác nhận xóa hội viên này?')) {
-    const success = await memberStore.deleteMember(id);
+const deleteMember = (member) => {
+  deletingMember.value = member;
+  showDeleteModal.value = true;
+};
+
+const cancelDelete = () => {
+  showDeleteModal.value = false;
+  deletingMember.value = null;
+};
+
+const confirmDelete = async () => {
+  if (!deletingMember.value) return;
+  
+  deleting.value = true;
+  try {
+    const success = await memberStore.deleteMember(deletingMember.value.id);
     if (success) {
       toast.success('Xóa hội viên thành công!');
+      showDeleteModal.value = false;
+      deletingMember.value = null;
     }
+  } finally {
+    deleting.value = false;
   }
 };
 

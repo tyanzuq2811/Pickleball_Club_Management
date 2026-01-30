@@ -1,8 +1,10 @@
 <template>
   <div class="space-y-6">
-    <div>
-      <h2 class="text-2xl font-bold text-slate-800">Tổng quan - Quản trị viên</h2>
-      <p class="text-slate-600 mt-1">Tổng quan hệ thống quản lý CLB Pickleball</p>
+    <div class="flex justify-between items-start">
+      <div>
+        <h2 class="text-2xl font-bold text-slate-800">Tổng quan - Quản trị viên</h2>
+        <p class="text-slate-600 mt-1">Tổng quan hệ thống quản lý CLB Pickleball</p>
+      </div>
     </div>
 
     <!-- Stats Grid -->
@@ -151,6 +153,9 @@ import { ref, onMounted } from 'vue'
 import axiosClient from '@/api/axiosClient'
 import { format, parseISO } from 'date-fns'
 import { UsersIcon, BanknotesIcon, TrophyIcon, BuildingOfficeIcon } from '@heroicons/vue/24/outline'
+import { useToast } from 'vue-toastification'
+
+const toast = useToast()
 
 const stats = ref({
   totalMembers: 0,

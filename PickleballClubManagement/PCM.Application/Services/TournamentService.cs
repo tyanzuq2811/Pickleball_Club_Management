@@ -461,6 +461,11 @@ public class TournamentService : ITournamentService
         var members = await _unitOfWork.Members.FindAsync(m => memberIds.Contains(m.Id));
         var memberDict = members.ToDictionary(m => m.Id, m => m.FullName);
 
+        // Load all match scores
+        var allScores = await _unitOfWork.MatchScores.FindAsync(s => matchIds.Contains(s.MatchId));
+        var scoresByMatch = allScores.GroupBy(s => s.MatchId)
+                                      .ToDictionary(g => g.Key, g => g.ToList());
+
         var rounds = tournamentMatches.GroupBy(tm => tm.Round)
             .OrderBy(g => g.Key)
             .Select(g => new BracketRoundDto
@@ -468,11 +473,14 @@ public class TournamentService : ITournamentService
                 RoundNumber = g.Key,
                 Matches = g.Select(tm => {
                     var m = matches.FirstOrDefault(x => x.Id == tm.MatchId);
+                    var matchScores = scoresByMatch.GetValueOrDefault(tm.MatchId, new List<MatchScore>());
                     return new BracketMatchDto 
                     {
                         MatchId = m!.Id,
                         Team1Player1 = m.Team1_Player1Id.HasValue ? memberDict.GetValueOrDefault(m.Team1_Player1Id.Value) : "TBD",
                         Team2Player1 = m.Team2_Player1Id.HasValue ? memberDict.GetValueOrDefault(m.Team2_Player1Id.Value) : "TBD",
+                        Team1Score = matchScores.Sum(s => s.Team1Score),
+                        Team2Score = matchScores.Sum(s => s.Team2Score),
                         WinningSide = m.WinningSide,
                         NextMatchId = tm.NextMatchId
                     };
@@ -543,5 +551,34 @@ public class TournamentService : ITournamentService
         }
 
         return ApiResponse<List<object>>.SuccessResponse(result);
+    }
+
+    public async Task<ApiResponse<List<ParticipantDto>>> GetParticipantsAsync(int tournamentId)
+    {
+        var tournament = await _unitOfWork.Tournaments.GetByIdAsync(tournamentId);
+        if (tournament == null) return ApiResponse<List<ParticipantDto>>.ErrorResponse("Không tìm thấy giải đấu");
+
+        var participants = await _unitOfWork.Participants.FindAsync(p => p.TournamentId == tournamentId);
+        var memberIds = participants.Select(p => p.MemberId).Distinct().ToList();
+        
+        // Lấy thông tin members
+        var members = await _unitOfWork.Members.FindAsync(m => memberIds.Contains(m.Id));
+        var memberDict = members.ToDictionary(m => m.Id, m => m.FullName);
+
+        var dtos = participants.Select(p => new ParticipantDto
+        {
+            Id = p.Id,
+            TournamentId = p.TournamentId,
+            MemberId = p.MemberId,
+            MemberName = memberDict.TryGetValue(p.MemberId, out var name) ? name : "N/A",
+            Team = p.Team,
+            EntryFeePaid = p.EntryFeePaid,
+            EntryFeeAmount = p.EntryFeeAmount,
+            Status = p.Status,
+            SeedNo = p.SeedNo,
+            JoinedDate = p.JoinedDate
+        }).ToList();
+
+        return ApiResponse<List<ParticipantDto>>.SuccessResponse(dtos);
     }
 }

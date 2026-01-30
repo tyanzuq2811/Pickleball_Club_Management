@@ -6,6 +6,7 @@ export const useTournamentStore = defineStore('tournament', {
     state: () => ({
         tournaments: [],
         currentBracket: null,
+        currentParticipants: [],
         loading: false
     }),
     actions: {
@@ -18,6 +19,25 @@ export const useTournamentStore = defineStore('tournament', {
                 }
             } catch (error) {
                 console.error(error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        async fetchParticipants(tournamentId) {
+            this.loading = true;
+            try {
+                const response = await axiosClient.get(`/tournaments/${tournamentId}/participants`);
+                if (response.data.success) {
+                    this.currentParticipants = response.data.data;
+                    return response.data.data;
+                } else {
+                    this.currentParticipants = [];
+                    return [];
+                }
+            } catch (error) {
+                console.error(error);
+                this.currentParticipants = [];
+                return [];
             } finally {
                 this.loading = false;
             }

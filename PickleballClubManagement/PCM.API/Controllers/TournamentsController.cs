@@ -140,6 +140,17 @@ public class TournamentsController : ControllerBase
     }
 
     /// <summary>
+    /// Lấy danh sách người tham gia giải đấu
+    /// </summary>
+    [HttpGet("{id}/participants")]
+    [Authorize(Roles = "Admin,Referee")]
+    public async Task<ActionResult<ApiResponse<List<ParticipantDto>>>> GetParticipants(int id)
+    {
+        var result = await _tournamentService.GetParticipantsAsync(id);
+        return result.Success ? Ok(result) : NotFound(result);
+    }
+
+    /// <summary>
     /// Cập nhật tỷ số giải đấu (Team Battle)
     /// </summary>
     [HttpPost("{id}/score")]

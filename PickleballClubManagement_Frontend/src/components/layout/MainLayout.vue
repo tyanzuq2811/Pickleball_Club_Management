@@ -31,7 +31,7 @@
             Quản lý Đặt sân
         </router-link>
 
-        <router-link v-if="authStore.isMember" to="/tournaments" class="flex items-center px-4 py-3 text-slate-600 rounded-lg hover:bg-sky-50 hover:text-sky-600 transition-colors group" active-class="bg-sky-50 text-sky-600 font-medium">
+        <router-link v-if="authStore.isMember || authStore.isReferee || authStore.isAdmin" to="/tournaments" class="flex items-center px-4 py-3 text-slate-600 rounded-lg hover:bg-sky-50 hover:text-sky-600 transition-colors group" active-class="bg-sky-50 text-sky-600 font-medium">
             <TrophyIcon class="w-5 h-5 mr-3 group-hover:text-sky-600" />
             Giải đấu
         </router-link>
@@ -59,6 +59,11 @@
         <router-link v-if="authStore.isAdmin" to="/news" class="flex items-center px-4 py-3 text-slate-600 rounded-lg hover:bg-sky-50 hover:text-sky-600 transition-colors group" active-class="bg-sky-50 text-sky-600 font-medium">
             <NewspaperIcon class="w-5 h-5 mr-3 group-hover:text-sky-600" />
             Quản lý Tin tức
+        </router-link>
+
+        <router-link v-if="authStore.isAdmin || authStore.isTreasurer" to="/wallet/manage" class="flex items-center px-4 py-3 text-slate-600 rounded-lg hover:bg-sky-50 hover:text-sky-600 transition-colors group" active-class="bg-sky-50 text-sky-600 font-medium">
+            <CreditCardIcon class="w-5 h-5 mr-3 group-hover:text-sky-600" />
+            Quản lý Ví
         </router-link>
 
         <router-link v-if="authStore.isMember" to="/wallet" class="flex items-center px-4 py-3 text-slate-600 rounded-lg hover:bg-sky-50 hover:text-sky-600 transition-colors group" active-class="bg-sky-50 text-sky-600 font-medium">

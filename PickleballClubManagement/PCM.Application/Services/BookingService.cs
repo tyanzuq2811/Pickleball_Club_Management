@@ -106,6 +106,12 @@ public class BookingService : IBookingService
     public async Task<ApiResponse<PagedResult<BookingDto>>> GetAllAsync(int pageNumber, int pageSize)
     {
         var bookings = await _unitOfWork.Bookings.GetAllAsync();
+        var members = await _unitOfWork.Members.GetAllAsync();
+        var courts = await _unitOfWork.Courts.GetAllAsync();
+        
+        var memberDict = members.ToDictionary(m => m.Id, m => m.FullName);
+        var courtDict = courts.ToDictionary(c => c.Id, c => c.Name);
+        
         var total = bookings.Count();
         var items = bookings.OrderByDescending(b => b.StartTime)
             .Skip((pageNumber - 1) * pageSize)
@@ -114,11 +120,14 @@ public class BookingService : IBookingService
             { 
                 Id = b.Id, 
                 CourtId = b.CourtId,
+                CourtName = courtDict.ContainsKey(b.CourtId) ? courtDict[b.CourtId] : "Unknown",
                 MemberId = b.MemberId,
+                MemberName = memberDict.ContainsKey(b.MemberId) ? memberDict[b.MemberId] : "Unknown",
                 StartTime = b.StartTime,
                 EndTime = b.EndTime,
                 Status = b.Status,
-                TotalPrice = b.TotalPrice
+                TotalPrice = b.TotalPrice,
+                Notes = b.Notes
             }).ToList();
 
         return ApiResponse<PagedResult<BookingDto>>.SuccessResponse(new PagedResult<BookingDto>

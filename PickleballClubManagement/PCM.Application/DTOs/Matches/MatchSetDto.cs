@@ -35,3 +35,10 @@ public class MatchWithSetsDto
     public DateTime? EndTime { get; set; }
     public List<MatchSetDto> Sets { get; set; } = new();
 }
+
+public class UpdateMatchScoreDto
+{
+    public int? Team1Score { get; set; }
+    public int? Team2Score { get; set; }
+    public int? WinningSide { get; set; } // 0=None, 1=Team1, 2=Team2
+}

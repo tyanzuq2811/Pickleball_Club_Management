@@ -1,5 +1,6 @@
 <template>
   <router-view />
+  <ConfirmDialog />
 </template>
 
 <script setup>
@@ -10,6 +11,7 @@ import { useBookingStore } from '@/stores/booking';
 import { useNotificationStore } from '@/stores/notification';
 import signalRService from '@/services/signalrService';
 import { useToast } from 'vue-toastification';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 
 const authStore = useAuthStore();
 const matchStore = useMatchStore();

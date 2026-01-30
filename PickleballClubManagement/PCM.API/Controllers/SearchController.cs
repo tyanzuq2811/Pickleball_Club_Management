@@ -18,6 +18,7 @@ public class SearchController : ControllerBase
     }
 
     [HttpGet("bookings")]
+    [Authorize(Roles = "Admin,Treasurer")]
     public async Task<ActionResult<ApiResponse<List<SearchResultDto>>>> SearchBookings(
         [FromQuery] string? keyword,
         [FromQuery] int? status,

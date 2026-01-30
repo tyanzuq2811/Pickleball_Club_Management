@@ -27,6 +27,7 @@ public class MatchController : ControllerBase
     }
 
     [HttpPut("{id}/score")]
+    [Authorize(Roles = "Referee,Admin")]
     public async Task<ActionResult<ApiResponse<bool>>> UpdateScore(int id, [FromBody] UpdateScoreDto request)
     {
         var result = await _tournamentService.UpdateMatchResultAsync(id, request.Team1Score, request.Team2Score, request.SetNumber, request.IsFinal);

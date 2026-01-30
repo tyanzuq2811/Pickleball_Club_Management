@@ -8,7 +8,7 @@
     </div>
 
     <div v-if="tournamentStore.loading" class="flex-1 flex items-center justify-center">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600"></div>
     </div>
 
     <div v-else-if="!tournamentStore.currentBracket" class="flex-1 flex flex-col items-center justify-center text-slate-500">
@@ -62,9 +62,9 @@
         
         <!-- Winner Box (Optional) -->
         <div class="flex flex-col justify-center w-48">
-             <div class="border-2 border-dashed border-primary-200 rounded-lg p-4 text-center">
+             <div class="border-2 border-dashed border-sky-200 rounded-lg p-4 text-center">
                 <TrophyIcon class="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-                <span class="text-sm font-bold text-primary-700">Nhà Vô Địch</span>
+                <span class="text-sm font-bold text-sky-700">Nhà Vô Địch</span>
              </div>
         </div>
       </div>

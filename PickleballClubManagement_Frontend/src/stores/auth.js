@@ -4,8 +4,8 @@ import { useToast } from "vue-toastification";
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
-        user: JSON.parse(localStorage.getItem('user')) || null,
-        token: localStorage.getItem('token') || null,
+        user: JSON.parse(sessionStorage.getItem('user')) || null,
+        token: sessionStorage.getItem('token') || null,
         loading: false,
     }),
     getters: {
@@ -31,9 +31,9 @@ export const useAuthStore = defineStore('auth', {
                     this.token = token;
                     this.user = user;
                     
-                    // Lưu vào LocalStorage
-                    localStorage.setItem('token', token);
-                    localStorage.setItem('user', JSON.stringify(user));
+                    // Lưu vào SessionStorage (sẽ bị xóa khi đóng tab/browser)
+                    sessionStorage.setItem('token', token);
+                    sessionStorage.setItem('user', JSON.stringify(user));
                     
                     toast.success(`Chào mừng ${user.fullName} quay trở lại!`);
                     return true;
@@ -52,6 +52,9 @@ export const useAuthStore = defineStore('auth', {
         logout() {
             this.token = null;
             this.user = null;
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
+            // Xóa cả localStorage cũ nếu còn
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/login';

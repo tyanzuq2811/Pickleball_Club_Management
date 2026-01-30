@@ -76,13 +76,13 @@
 
           <div class="space-y-2">
             <!-- Member: Join Tournament -->
-            <button v-if="tour.status === 0 && !authStore.isAdmin" @click="joinTournament(tour.id)" 
+            <button v-if="tour.status === 0 && !authStore.isAdmin && !authStore.isReferee" @click="joinTournament(tour.id)" 
                     class="w-full py-2 px-4 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
               Đăng ký tham gia
             </button>
 
-            <!-- Admin Actions -->
-            <template v-if="authStore.isAdmin">
+            <!-- Admin/Referee Actions -->
+            <template v-if="authStore.isAdmin || authStore.isReferee">
               <div class="flex gap-2">
                 <button @click="editTournament(tour)" 
                         class="flex-1 inline-flex items-center justify-center gap-1 py-2 px-3 bg-amber-50 text-amber-600 hover:bg-amber-100 font-medium rounded-lg transition-all duration-200 hover:shadow-md text-sm"
@@ -101,6 +101,13 @@
                   Xóa
                 </button>
               </div>
+              <button @click="viewParticipants(tour)"
+                      class="w-full inline-flex items-center justify-center gap-2 py-2 px-4 bg-sky-50 text-sky-600 font-medium rounded-lg hover:bg-sky-100 transition-all duration-200 hover:shadow-md text-sm border border-sky-200">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Xem người tham gia ({{ tour.participantCount || 0 }})
+              </button>
               <button v-if="tour.status === 0" @click="autoDivideTeams(tour.id)"
                       class="w-full inline-flex items-center justify-center gap-2 py-2 px-4 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-all duration-200 hover:shadow-md text-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -220,6 +227,80 @@
         </div>
       </div>
     </div>
+
+    <!-- Participants Modal -->
+    <div v-if="showParticipantsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="p-6 border-b border-slate-200">
+          <div class="flex justify-between items-center">
+            <h3 class="text-xl font-bold text-slate-800">
+              Danh sách người tham gia
+            </h3>
+            <button @click="showParticipantsModal = false" class="text-slate-400 hover:text-slate-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+          <p class="text-sm text-slate-500 mt-1">{{ selectedTournamentForParticipants?.title }}</p>
+        </div>
+        
+        <div class="p-6 overflow-y-auto flex-1">
+          <div v-if="loadingParticipants" class="text-center py-10">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600 mx-auto"></div>
+            <p class="text-slate-500 mt-2">Đang tải...</p>
+          </div>
+          
+          <div v-else-if="participants.length === 0" class="text-center py-10">
+            <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <p class="text-slate-500">Chưa có ai đăng ký tham gia giải đấu này</p>
+          </div>
+          
+          <div v-else class="space-y-3">
+            <div v-for="(p, index) in participants" :key="p.id" 
+                 class="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold">
+                  {{ index + 1 }}
+                </div>
+                <div>
+                  <p class="font-semibold text-slate-800">{{ p.memberName }}</p>
+                  <p class="text-xs text-slate-500">Đăng ký: {{ formatDate(p.joinedDate) }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span v-if="p.team !== null && p.team !== undefined" 
+                      class="px-3 py-1 text-xs font-semibold rounded-full"
+                      :class="p.team === 0 ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'">
+                  {{ p.team === 0 ? 'Đội A' : 'Đội B' }}
+                </span>
+                <span class="px-3 py-1 text-xs font-semibold rounded-full"
+                      :class="getParticipantStatusClass(p.status)">
+                  {{ getParticipantStatusText(p.status) }}
+                </span>
+                <span v-if="p.entryFeePaid" class="text-green-500" title="Đã thanh toán">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="p-4 border-t border-slate-200 bg-slate-50">
+          <div class="flex justify-between items-center text-sm text-slate-600">
+            <span>Tổng số: <strong>{{ participants.length }}</strong> người</span>
+            <button @click="showParticipantsModal = false"
+                    class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 font-medium">
+              Đóng
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -230,13 +311,19 @@ import { useAuthStore } from '@/stores/auth';
 import { TrophyIcon, CalendarIcon, CurrencyDollarIcon } from '@heroicons/vue/24/outline';
 import { format } from 'date-fns';
 import { useToast } from 'vue-toastification';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const tournamentStore = useTournamentStore();
 const authStore = useAuthStore();
 const toast = useToast();
+const { confirm, confirmDelete, confirmWarning } = useConfirmDialog();
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
+const showParticipantsModal = ref(false);
 const selectedTournament = ref(null);
+const selectedTournamentForParticipants = ref(null);
+const participants = ref([]);
+const loadingParticipants = ref(false);
 const newTournament = ref({
   title: '',
   description: '',
@@ -311,7 +398,8 @@ const editTournament = (tournament) => {
 };
 
 const confirmDeleteTournament = async (tournamentId) => {
-  if (confirm('Bạn có chắc chắn muốn xóa giải đấu này? Hành động này không thể hoàn tác!')) {
+  const confirmed = await confirmDelete('Bạn có chắc chắn muốn xóa giải đấu này? Hành động này không thể hoàn tác!');
+  if (confirmed) {
     const success = await tournamentStore.deleteTournament(tournamentId);
     if (success) {
       toast.success('Xóa giải đấu thành công!');
@@ -345,9 +433,34 @@ const getStatusClass = (status) => [
   'bg-blue-100 text-blue-800', 
   'bg-slate-100 text-slate-800'][status];
 
+const getParticipantStatusText = (status) => ['Chờ duyệt', 'Đã xác nhận', 'Bị loại', 'Rút lui'][status] || 'Unknown';
+const getParticipantStatusClass = (status) => [
+  'bg-yellow-100 text-yellow-800',
+  'bg-green-100 text-green-800', 
+  'bg-red-100 text-red-800',
+  'bg-slate-100 text-slate-800'][status];
+
+// View Participants
+const viewParticipants = async (tournament) => {
+  selectedTournamentForParticipants.value = tournament;
+  showParticipantsModal.value = true;
+  loadingParticipants.value = true;
+  
+  try {
+    const data = await tournamentStore.fetchParticipants(tournament.id);
+    participants.value = data || [];
+  } catch (error) {
+    console.error('Error loading participants:', error);
+    participants.value = [];
+  } finally {
+    loadingParticipants.value = false;
+  }
+};
+
 // Tournament Actions
 const joinTournament = async (tournamentId) => {
-  if (confirm('Xác nhận đăng ký tham gia giải đấu này?')) {
+  const confirmed = await confirm('Xác nhận đăng ký tham gia giải đấu này?', { title: 'Đăng ký giải đấu' });
+  if (confirmed) {
     const success = await tournamentStore.joinTournament(tournamentId);
     if (success) {
       toast.success('Đăng ký tham gia thành công!');
@@ -357,7 +470,8 @@ const joinTournament = async (tournamentId) => {
 };
 
 const autoDivideTeams = async (tournamentId) => {
-  if (confirm('Tự động chia đội dựa trên ELO ranking?')) {
+  const confirmed = await confirm('Tự động chia đội dựa trên ELO ranking?', { title: 'Chia đội tự động', type: 'info' });
+  if (confirmed) {
     const success = await tournamentStore.autoDivideTeams(tournamentId);
     if (success) {
       toast.success('Chia đội thành công!');
@@ -367,7 +481,8 @@ const autoDivideTeams = async (tournamentId) => {
 };
 
 const generateBracket = async (tournamentId) => {
-  if (confirm('Tạo cây thi đấu cho giải này?')) {
+  const confirmed = await confirm('Tạo cây thi đấu cho giải này?', { title: 'Tạo cây thi đấu', type: 'info' });
+  if (confirmed) {
     const success = await tournamentStore.generateBracket(tournamentId);
     if (success) {
       toast.success('Tạo cây thi đấu thành công!');
@@ -377,7 +492,8 @@ const generateBracket = async (tournamentId) => {
 };
 
 const startTournament = async (tournamentId) => {
-  if (confirm('Bắt đầu giải đấu? Không thể hoàn tác!')) {
+  const confirmed = await confirmWarning('Bắt đầu giải đấu? Hành động này không thể hoàn tác!', { title: 'Bắt đầu giải đấu' });
+  if (confirmed) {
     const success = await tournamentStore.startTournament(tournamentId);
     if (success) {
       toast.success('Giải đấu đã bắt đầu!');

@@ -47,9 +47,9 @@ public static class DbInitializer
             var adminMember = new Member
             {
                 UserId = adminUser.Id,
-                FullName = "Quản Trị Viên",
+                FullName = "Trần Minh Quân",
                 Email = adminEmail,
-                PhoneNumber = "0123456789",
+                PhoneNumber = "0987654321",
                 JoinDate = DateTime.UtcNow,
                 RankELO = 1500,
                 WalletBalance = 0,
@@ -70,8 +70,9 @@ public static class DbInitializer
             context.Members.Add(new Member
             {
                 UserId = user.Id,
-                FullName = "Thủ Quỹ CLB",
+                FullName = "Nguyễn Thị Hồng Nhung",
                 Email = treasurerEmail,
+                PhoneNumber = "0912345678",
                 JoinDate = DateTime.UtcNow,
                 IsActive = true,
                 RankELO = 1200
@@ -89,8 +90,9 @@ public static class DbInitializer
             context.Members.Add(new Member
             {
                 UserId = user.Id,
-                FullName = "Trọng Tài Chính",
+                FullName = "Phạm Văn Hùng",
                 Email = refereeEmail,
+                PhoneNumber = "0923456789",
                 JoinDate = DateTime.UtcNow,
                 IsActive = true,
                 RankELO = 1200
@@ -100,26 +102,26 @@ public static class DbInitializer
         // Seed Sample Members - NHIỀU HƠN
         var sampleMembers = new List<(string Name, string Email, double Rank)>
         {
-            ("Hội Viên 1", "member1@pcm.com", 1200),
-            ("Nguyễn Văn A", "nguyenvana@pcm.com", 1300),
-            ("Trần Thị B", "tranthib@pcm.com", 1250),
-            ("Lê Văn C", "levanc@pcm.com", 1400),
-            ("Phạm Thị D", "phamthid@pcm.com", 1350),
-            ("Hoàng Văn E", "hoangvane@pcm.com", 1200),
-            ("Vũ Thị F", "vuthif@pcm.com", 1280),
-            ("Đặng Minh G", "dangminhg@pcm.com", 1320),
-            ("Bùi Thị H", "buithih@pcm.com", 1260),
-            ("Dương Văn I", "duongvani@pcm.com", 1380),
-            ("Võ Thị K", "vothik@pcm.com", 1290),
-            ("Phan Văn L", "phanvanl@pcm.com", 1340),
-            ("Trịnh Thị M", "trinhthim@pcm.com", 1310),
-            ("Lý Văn N", "lyvann@pcm.com", 1270),
-            ("Mai Thị O", "maithio@pcm.com", 1360),
-            ("Ngô Văn P", "ngovanp@pcm.com", 1330),
-            ("Cao Thị Q", "caothiq@pcm.com", 1240),
-            ("Tô Văn R", "tovanr@pcm.com", 1370),
-            ("Hồ Thị S", "hothis@pcm.com", 1300),
-            ("Đinh Văn T", "dinhvant@pcm.com", 1280)
+            ("Lê Tuấn Dũng", "letuandung@pcm.com", 1200),
+            ("Nguyễn Hoàng Nam", "nguyenhoangnam@pcm.com", 1300),
+            ("Trần Thị Thanh Hà", "tranthanhha@pcm.com", 1250),
+            ("Lê Minh Khôi", "leminhkhoi@pcm.com", 1400),
+            ("Phạm Thị Ngọc Ánh", "phamngocaoh@pcm.com", 1350),
+            ("Hoàng Đức Anh", "hoangducanh@pcm.com", 1200),
+            ("Vũ Thị Mai Linh", "vumailink@pcm.com", 1280),
+            ("Đặng Quốc Việt", "dangquocviet@pcm.com", 1320),
+            ("Bùi Thị Thúy Hằng", "buithuyhang@pcm.com", 1260),
+            ("Dương Trọng Nghĩa", "duongtrongnghia@pcm.com", 1380),
+            ("Võ Thị Kim Chi", "vokimchi@pcm.com", 1290),
+            ("Phan Thanh Tùng", "phanthanhtung@pcm.com", 1340),
+            ("Trịnh Thị Như Quỳnh", "trinhnhuquynh@pcm.com", 1310),
+            ("Lý Hoàng Bảo", "lyhoangbao@pcm.com", 1270),
+            ("Mai Thị Bích Ngọc", "maibichngoc@pcm.com", 1360),
+            ("Ngô Văn Thành", "ngovanthanh@pcm.com", 1330),
+            ("Cao Thị Diệu My", "caodieumi@pcm.com", 1240),
+            ("Tô Quang Huy", "toquanghuy@pcm.com", 1370),
+            ("Hồ Thị Phương Vy", "hophuongvy@pcm.com", 1300),
+            ("Đinh Công Minh", "dinhcongminh@pcm.com", 1280)
         };
 
         var random = new Random();
@@ -196,9 +198,13 @@ public static class DbInitializer
         if (!await context.Transactions.AnyAsync())
         {
             var admin = await context.Members.FirstAsync();
-            var incomeCategory = await context.TransactionCategories.FirstAsync(c => c.Name == "Đóng góp");
-            var expenseCategory = await context.TransactionCategories.FirstAsync(c => c.Name == "Sửa chữa");
-            var courtFeeCategory = await context.TransactionCategories.FirstAsync(c => c.Name == "Phí sân");
+            // Sử dụng FirstOrDefaultAsync để tránh lỗi nếu category không tồn tại
+            var incomeCategory = await context.TransactionCategories.FirstOrDefaultAsync(c => c.Name == "Nạp tiền ví") 
+                                ?? await context.TransactionCategories.FirstAsync(c => c.Type == TransactionType.Income);
+            var expenseCategory = await context.TransactionCategories.FirstOrDefaultAsync(c => c.Name == "Chi phí bảo trì")
+                                ?? await context.TransactionCategories.FirstAsync(c => c.Type == TransactionType.Expense);
+            var courtFeeCategory = await context.TransactionCategories.FirstOrDefaultAsync(c => c.Name == "Phí đặt sân")
+                                ?? await context.TransactionCategories.FirstAsync(c => c.Name.Contains("sân"));
             
             var transactions = new List<Transaction>();
             
@@ -345,26 +351,57 @@ public static class DbInitializer
                     CurrentScore_TeamA = 0,
                     CurrentScore_TeamB = 0,
                     EntryFee = 50000,
-                    PrizePool = 0,
+                    PrizePool = 500000,
                     CreatedBy = admin.Id,
                     StartDate = DateTime.UtcNow.AddDays(7),
-                    CreatedDate = DateTime.UtcNow
+                    EndDate = DateTime.UtcNow.AddDays(8),
+                    CreatedDate = DateTime.UtcNow.AddDays(-7)
                 },
                 new Tournament
                 {
-                    Title = "Giải Knockout Mùa Xuân",
+                    Title = "Giải Knockout Mùa Xuân 2025",
                     Type = TournamentType.Professional,
                     GameMode = GameMode.Knockout,
                     Status = TournamentStatus.Open,
                     EntryFee = 100000,
-                    PrizePool = 0,
+                    PrizePool = 2000000,
                     CreatedBy = admin.Id,
                     StartDate = DateTime.UtcNow.AddDays(14),
-                    CreatedDate = DateTime.UtcNow
+                    EndDate = DateTime.UtcNow.AddDays(16),
+                    CreatedDate = DateTime.UtcNow.AddDays(-5)
                 },
                 new Tournament
                 {
-                    Title = "Kèo Thách Đấu Tuần 1",
+                    Title = "Giải Vô Địch CLB Tháng 12",
+                    Type = TournamentType.Professional,
+                    GameMode = GameMode.Knockout,
+                    Status = TournamentStatus.Ongoing,
+                    EntryFee = 150000,
+                    PrizePool = 3000000,
+                    CreatedBy = admin.Id,
+                    StartDate = DateTime.UtcNow.AddDays(-3),
+                    EndDate = DateTime.UtcNow.AddDays(1),
+                    CreatedDate = DateTime.UtcNow.AddDays(-14)
+                },
+                new Tournament
+                {
+                    Title = "Giải Giao Hữu Cuối Tuần",
+                    Type = TournamentType.MiniGame,
+                    GameMode = GameMode.TeamBattle,
+                    Status = TournamentStatus.Finished,
+                    Config_TargetWins = 3,
+                    CurrentScore_TeamA = 3,
+                    CurrentScore_TeamB = 1,
+                    EntryFee = 30000,
+                    PrizePool = 200000,
+                    CreatedBy = admin.Id,
+                    StartDate = DateTime.UtcNow.AddDays(-10),
+                    EndDate = DateTime.UtcNow.AddDays(-10),
+                    CreatedDate = DateTime.UtcNow.AddDays(-17)
+                },
+                new Tournament
+                {
+                    Title = "Kèo Thách Đấu VIP",
                     Type = TournamentType.Duel,
                     GameMode = GameMode.None,
                     Status = TournamentStatus.Ongoing,
@@ -372,6 +409,7 @@ public static class DbInitializer
                     PrizePool = 0,
                     CreatedBy = admin.Id,
                     StartDate = DateTime.UtcNow.AddDays(-2),
+                    EndDate = DateTime.UtcNow.AddDays(5),
                     CreatedDate = DateTime.UtcNow.AddDays(-3)
                 }
             };
@@ -379,29 +417,235 @@ public static class DbInitializer
             context.Tournaments.AddRange(tournaments);
             await context.SaveChangesAsync();
 
-            // Add participants to first tournament
-            var members = await context.Members.Where(m => m.Email.Contains("member") || m.Email.Contains("nguyen") || m.Email.Contains("tran")).Take(6).ToListAsync();
-            if (members.Count >= 4)
+            // Add participants to tournaments - NHIỀU HƠN
+            var allMembers = await context.Members.Where(m => !m.Email.Contains("admin") && !m.Email.Contains("treasurer") && !m.Email.Contains("referee")).ToListAsync();
+            
+            if (allMembers.Count >= 8)
             {
-                var firstTournament = tournaments[0];
                 var participants = new List<Participant>();
                 
-                for (int i = 0; i < Math.Min(members.Count, 6); i++)
+                // Tournament 1: Giải Giao Hữu Tháng 1 - 8 người
+                var t1Members = allMembers.OrderBy(x => random.Next()).Take(8).ToList();
+                for (int i = 0; i < t1Members.Count; i++)
                 {
                     participants.Add(new Participant
                     {
-                        TournamentId = firstTournament.Id,
-                        MemberId = members[i].Id,
+                        TournamentId = tournaments[0].Id,
+                        MemberId = t1Members[i].Id,
                         Team = i % 2 == 0 ? TeamSide.TeamA : TeamSide.TeamB,
                         EntryFeePaid = true,
                         EntryFeeAmount = 50000,
-                        JoinedDate = DateTime.UtcNow,
+                        JoinedDate = DateTime.UtcNow.AddDays(-random.Next(1, 6)),
+                        Status = ParticipantStatus.Confirmed
+                    });
+                }
+                
+                // Tournament 2: Giải Knockout Mùa Xuân - 12 người
+                var t2Members = allMembers.OrderBy(x => random.Next()).Take(12).ToList();
+                for (int i = 0; i < t2Members.Count; i++)
+                {
+                    participants.Add(new Participant
+                    {
+                        TournamentId = tournaments[1].Id,
+                        MemberId = t2Members[i].Id,
+                        Team = TeamSide.None,
+                        EntryFeePaid = random.Next(100) < 80, // 80% đã thanh toán
+                        EntryFeeAmount = 100000,
+                        JoinedDate = DateTime.UtcNow.AddDays(-random.Next(1, 4)),
+                        Status = random.Next(100) < 90 ? ParticipantStatus.Confirmed : ParticipantStatus.Pending,
+                        SeedNo = i < 4 ? i + 1 : null // Top 4 được seed
+                    });
+                }
+                
+                // Tournament 3: Giải Vô Địch CLB - 16 người (đang diễn ra)
+                var t3Members = allMembers.OrderBy(x => random.Next()).Take(Math.Min(16, allMembers.Count)).ToList();
+                for (int i = 0; i < t3Members.Count; i++)
+                {
+                    participants.Add(new Participant
+                    {
+                        TournamentId = tournaments[2].Id,
+                        MemberId = t3Members[i].Id,
+                        Team = TeamSide.None,
+                        EntryFeePaid = true,
+                        EntryFeeAmount = 150000,
+                        JoinedDate = DateTime.UtcNow.AddDays(-random.Next(7, 14)),
+                        Status = ParticipantStatus.Confirmed,
+                        SeedNo = i < 4 ? i + 1 : null
+                    });
+                }
+                
+                // Tournament 4: Giải Giao Hữu Cuối Tuần (đã kết thúc) - 6 người
+                var t4Members = allMembers.OrderBy(x => random.Next()).Take(6).ToList();
+                for (int i = 0; i < t4Members.Count; i++)
+                {
+                    participants.Add(new Participant
+                    {
+                        TournamentId = tournaments[3].Id,
+                        MemberId = t4Members[i].Id,
+                        Team = i % 2 == 0 ? TeamSide.TeamA : TeamSide.TeamB,
+                        EntryFeePaid = true,
+                        EntryFeeAmount = 30000,
+                        JoinedDate = DateTime.UtcNow.AddDays(-random.Next(14, 17)),
+                        Status = ParticipantStatus.Confirmed
+                    });
+                }
+                
+                // Tournament 5: Kèo Thách Đấu - 4 người
+                var t5Members = allMembers.OrderBy(x => random.Next()).Take(4).ToList();
+                for (int i = 0; i < t5Members.Count; i++)
+                {
+                    participants.Add(new Participant
+                    {
+                        TournamentId = tournaments[4].Id,
+                        MemberId = t5Members[i].Id,
+                        Team = TeamSide.None,
+                        EntryFeePaid = true,
+                        EntryFeeAmount = 0,
+                        JoinedDate = DateTime.UtcNow.AddDays(-random.Next(1, 3)),
                         Status = ParticipantStatus.Confirmed
                     });
                 }
                 
                 context.Participants.AddRange(participants);
                 await context.SaveChangesAsync();
+
+                // Tự động tạo bracket cho Tournament 3 (Giải Vô Địch CLB - đang diễn ra)
+                var t3ParticipantIds = participants.Where(p => p.TournamentId == tournaments[2].Id).Select(p => p.MemberId).ToList();
+                if (t3ParticipantIds.Count >= 4)
+                {
+                    // Shuffle participants
+                    var shuffledIds = t3ParticipantIds.OrderBy(x => random.Next()).ToList();
+                    var tournamentMatches = new List<TournamentMatch>();
+                    var bracketMatches = new List<Match>();
+
+                    // Round 1 - 8 trận (16 người)
+                    int matchesInRound1 = shuffledIds.Count / 2;
+                    for (int i = 0; i < matchesInRound1; i++)
+                    {
+                        var match = new Match
+                        {
+                            Date = tournaments[2].StartDate ?? DateTime.UtcNow,
+                            IsRanked = true,
+                            TournamentId = tournaments[2].Id,
+                            MatchFormat = MatchFormat.Singles,
+                            Team1_Player1Id = shuffledIds[i * 2],
+                            Team2_Player1Id = shuffledIds[i * 2 + 1],
+                            WinningSide = WinningSide.None,
+                            CreatedDate = DateTime.UtcNow
+                        };
+                        bracketMatches.Add(match);
+                    }
+
+                    context.Matches.AddRange(bracketMatches);
+                    await context.SaveChangesAsync();
+
+                    // Tạo TournamentMatch cho Round 1
+                    for (int i = 0; i < bracketMatches.Count; i++)
+                    {
+                        tournamentMatches.Add(new TournamentMatch
+                        {
+                            TournamentId = tournaments[2].Id,
+                            MatchId = bracketMatches[i].Id,
+                            Round = 1,
+                            BracketGroup = "WinnerBracket"
+                        });
+                    }
+
+                    // Round 2 - 4 trận
+                    var round2Matches = new List<Match>();
+                    for (int i = 0; i < matchesInRound1 / 2; i++)
+                    {
+                        var match = new Match
+                        {
+                            Date = (tournaments[2].StartDate ?? DateTime.UtcNow).AddDays(1),
+                            IsRanked = true,
+                            TournamentId = tournaments[2].Id,
+                            MatchFormat = MatchFormat.Singles,
+                            WinningSide = WinningSide.None,
+                            CreatedDate = DateTime.UtcNow
+                        };
+                        round2Matches.Add(match);
+                    }
+
+                    context.Matches.AddRange(round2Matches);
+                    await context.SaveChangesAsync();
+
+                    // Tạo TournamentMatch cho Round 2 và link NextMatchId
+                    for (int i = 0; i < round2Matches.Count; i++)
+                    {
+                        tournamentMatches.Add(new TournamentMatch
+                        {
+                            TournamentId = tournaments[2].Id,
+                            MatchId = round2Matches[i].Id,
+                            Round = 2,
+                            BracketGroup = "WinnerBracket"
+                        });
+                        // Link round 1 matches to round 2
+                        tournamentMatches[i * 2].NextMatchId = round2Matches[i].Id;
+                        tournamentMatches[i * 2 + 1].NextMatchId = round2Matches[i].Id;
+                    }
+
+                    // Round 3 (Semi-finals) - 2 trận
+                    var round3Matches = new List<Match>();
+                    for (int i = 0; i < 2; i++)
+                    {
+                        var match = new Match
+                        {
+                            Date = (tournaments[2].StartDate ?? DateTime.UtcNow).AddDays(2),
+                            IsRanked = true,
+                            TournamentId = tournaments[2].Id,
+                            MatchFormat = MatchFormat.Singles,
+                            WinningSide = WinningSide.None,
+                            CreatedDate = DateTime.UtcNow
+                        };
+                        round3Matches.Add(match);
+                    }
+
+                    context.Matches.AddRange(round3Matches);
+                    await context.SaveChangesAsync();
+
+                    // TournamentMatch cho Round 3
+                    int r2StartIdx = matchesInRound1;
+                    for (int i = 0; i < round3Matches.Count; i++)
+                    {
+                        tournamentMatches.Add(new TournamentMatch
+                        {
+                            TournamentId = tournaments[2].Id,
+                            MatchId = round3Matches[i].Id,
+                            Round = 3,
+                            BracketGroup = "WinnerBracket"
+                        });
+                        tournamentMatches[r2StartIdx + i * 2].NextMatchId = round3Matches[i].Id;
+                        tournamentMatches[r2StartIdx + i * 2 + 1].NextMatchId = round3Matches[i].Id;
+                    }
+
+                    // Round 4 (Final) - 1 trận
+                    var finalMatch = new Match
+                    {
+                        Date = (tournaments[2].StartDate ?? DateTime.UtcNow).AddDays(3),
+                        IsRanked = true,
+                        TournamentId = tournaments[2].Id,
+                        MatchFormat = MatchFormat.Singles,
+                        WinningSide = WinningSide.None,
+                        CreatedDate = DateTime.UtcNow
+                    };
+                    context.Matches.Add(finalMatch);
+                    await context.SaveChangesAsync();
+
+                    int r3StartIdx = matchesInRound1 + matchesInRound1 / 2;
+                    tournamentMatches.Add(new TournamentMatch
+                    {
+                        TournamentId = tournaments[2].Id,
+                        MatchId = finalMatch.Id,
+                        Round = 4,
+                        BracketGroup = "WinnerBracket"
+                    });
+                    tournamentMatches[r3StartIdx].NextMatchId = finalMatch.Id;
+                    tournamentMatches[r3StartIdx + 1].NextMatchId = finalMatch.Id;
+
+                    context.TournamentMatches.AddRange(tournamentMatches);
+                    await context.SaveChangesAsync();
+                }
             }
         }
 
@@ -543,7 +787,7 @@ public static class DbInitializer
                 {
                     Title = "Chúc mừng top 3 giải tháng 12",
                     Summary = "Vinh danh 3 VĐV xuất sắc nhất tháng 12/2025",
-                    Content = "CLB xin chúc mừng:\n\n🥇 Vị trí 1: Nguyễn Văn A - 1400 ELO\n🥈 Vị trí 2: Lê Văn C - 1380 ELO\n🥉 Vị trí 3: Phạm Thị D - 1350 ELO\n\nChúc mừng các bạn! Hẹn gặp lại trong giải tháng 1!",
+                    Content = "CLB xin chúc mừng:\n\n🥇 Vị trí 1: Lê Minh Khôi - 1400 ELO\n🥈 Vị trí 2: Dương Trọng Nghĩa - 1380 ELO\n🥉 Vị trí 3: Tô Quang Huy - 1370 ELO\n\nChúc mừng các bạn! Hẹn gặp lại trong giải tháng 1!",
                     IsPinned = false,
                     CreatedBy = admin.FullName,
                     CreatedDate = DateTime.UtcNow.AddDays(-7)
@@ -556,8 +800,10 @@ public static class DbInitializer
 
         // Seed Sample Wallet Transactions - NHIỀU HƠN
         var walletTransactions = new List<WalletTransaction>();
-        var depositCategory = await context.TransactionCategories.FirstOrDefaultAsync(c => c.Name == "Nạp tiền");
-        var bookingCategory = await context.TransactionCategories.FirstOrDefaultAsync(c => c.Name == "Phí sân");
+        var depositCategory = await context.TransactionCategories.FirstOrDefaultAsync(c => c.Name == "Nạp tiền ví")
+                            ?? await context.TransactionCategories.FirstOrDefaultAsync(c => c.Name == "Nạp tiền");
+        var bookingCategory = await context.TransactionCategories.FirstOrDefaultAsync(c => c.Name == "Phí đặt sân")
+                            ?? await context.TransactionCategories.FirstOrDefaultAsync(c => c.Name == "Phí sân");
         
         if (depositCategory != null && bookingCategory != null)
         {

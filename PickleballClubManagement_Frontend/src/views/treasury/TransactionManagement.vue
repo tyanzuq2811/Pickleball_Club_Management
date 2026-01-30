@@ -377,9 +377,11 @@ import { ref, onMounted, computed } from 'vue';
 import { useTransactionStore } from '@/stores/transaction';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import { useToast } from 'vue-toastification';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const transactionStore = useTransactionStore();
 const toast = useToast();
+const { confirm: confirmDialog, confirmDelete, confirmWarning } = useConfirmDialog();
 const showCategoryModal = ref(false);
 const showTransactionModal = ref(false);
 const showEditTransactionModal = ref(false);
@@ -451,7 +453,8 @@ const viewDepositDetail = (deposit) => {
 };
 
 const handleApprove = async (id) => {
-  if (confirm('Xác nhận duyệt khoản nạp này? Tiền sẽ được cộng vào ví hội viên ngay lập tức.')) {
+  const confirmed = await confirmDialog('Xác nhận duyệt khoản nạp này? Tiền sẽ được cộng vào ví hội viên ngay lập tức.', { title: 'Duyệt nạp tiền', type: 'success' });
+  if (confirmed) {
     const success = await transactionStore.approveDeposit(id);
     if (success) {
       showDepositDetailModal.value = false;
@@ -461,7 +464,8 @@ const handleApprove = async (id) => {
 };
 
 const handleReject = async (id) => {
-  if (confirm('Xác nhận từ chối khoản nạp này? Hành động này không thể hoàn tác.')) {
+  const confirmed = await confirmWarning('Xác nhận từ chối khoản nạp này? Hành động này không thể hoàn tác.');
+  if (confirmed) {
     const success = await transactionStore.rejectDeposit(id);
     if (success) {
       toast.success('Đã từ chối yêu cầu nạp tiền');
@@ -481,7 +485,8 @@ const handleCreateCategory = async () => {
 };
 
 const deleteCategory = async (id) => {
-  if (confirm('Xác nhận xóa danh mục này?')) {
+  const confirmed = await confirmDelete('Xác nhận xóa danh mục này?');
+  if (confirmed) {
     const success = await transactionStore.deleteCategory(id);
     if (success) {
       toast.success('Xóa danh mục thành công!');
@@ -539,7 +544,8 @@ const closeTransactionModal = () => {
 };
 
 const deleteTransaction = async (id) => {
-  if (confirm('Xác nhận xóa giao dịch này?')) {
+  const confirmed = await confirmDelete('Xác nhận xóa giao dịch này?');
+  if (confirmed) {
     const success = await transactionStore.deleteTransaction(id);
     if (success) {
       toast.success('Xóa giao dịch thành công!');

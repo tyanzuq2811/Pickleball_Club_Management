@@ -208,6 +208,7 @@ import { format } from 'date-fns';
 import axiosClient from '@/api/axiosClient';
 import { useToast } from 'vue-toastification';
 import { useAuthStore } from '@/stores/auth';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const props = defineProps({
   show: Boolean,
@@ -218,6 +219,7 @@ const emit = defineEmits(['close', 'updated']);
 
 const authStore = useAuthStore();
 const toast = useToast();
+const { confirmDelete: confirmDeleteDialog } = useConfirmDialog();
 
 const match = ref({});
 const sets = ref([]);
@@ -291,7 +293,8 @@ const submitSet = async () => {
 };
 
 const deleteSet = async (setId) => {
-  if (confirm('Xác nhận xóa set này?')) {
+  const confirmed = await confirmDeleteDialog('Xác nhận xóa set này?');
+  if (confirmed) {
     try {
       await axiosClient.delete(`/matches/sets/${setId}`);
       toast.success('Xóa set thành công');

@@ -4,8 +4,21 @@ obj/
 *.dll
 *.exe
 *.pdb
+
 # Frontend env
 PickleballClubManagement_Frontend/.env
+PickleballClubManagement_Frontend/.env.local
+PickleballClubManagement_Frontend/.env.*.local
+
+# Backend sensitive files
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/appsettings.Local.json
+*.user
+secrets.json
+
+# User Secrets (Windows)
+%APPDATA%/Microsoft/UserSecrets/
 
 # Node
 node_modules/

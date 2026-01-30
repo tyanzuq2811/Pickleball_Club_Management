@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <div class="flex justify-between items-center">
       <h2 class="text-2xl font-bold text-slate-800">Quản Lý Đặt Sân</h2>
-      <button v-if="authStore.isAdmin" @click="showCreateModal = true" 
+      <button v-if="authStore.isAdmin || authStore.isTreasurer" @click="showCreateModal = true" 
               class="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors font-medium text-sm flex items-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
@@ -17,7 +17,7 @@
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-2">Tìm kiếm</label>
           <input v-model="searchQuery" type="text" placeholder="Tên hội viên..."
-                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500">
         </div>
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-2">Sân</label>
@@ -60,8 +60,8 @@
         <tbody class="bg-white divide-y divide-slate-200">
           <tr v-for="booking in filteredBookings" :key="booking.id" class="hover:bg-slate-50">
             <td class="px-6 py-4 text-sm text-slate-900">#{{ booking.id }}</td>
-            <td class="px-6 py-4 text-sm text-slate-900">{{ booking.memberName || 'N/A' }}</td>
-            <td class="px-6 py-4 text-sm text-slate-900">{{ booking.courtName || 'N/A' }}</td>
+            <td class="px-6 py-4 text-sm text-slate-900">{{ getMemberName(booking) }}</td>
+            <td class="px-6 py-4 text-sm text-slate-900">{{ getCourtName(booking) }}</td>
             <td class="px-6 py-4 text-sm text-slate-900">
               {{ formatDateTime(booking.startTime) }} - {{ formatTime(booking.endTime) }}
             </td>
@@ -74,7 +74,7 @@
             </td>
             <td class="px-6 py-4 text-sm">
               <div class="flex items-center justify-center gap-2">
-                <button v-if="authStore.isAdmin" @click="editBooking(booking)" 
+                <button v-if="authStore.isAdmin || authStore.isTreasurer" @click="editBooking(booking)" 
                         class="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg text-xs font-medium transition-all duration-200 hover:shadow-md" 
                         title="Chỉnh sửa">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,7 +82,7 @@
                   </svg>
                   Sửa
                 </button>
-                <button v-if="authStore.isAdmin || booking.memberId === authStore.user?.memberId" 
+                <button v-if="authStore.isAdmin || authStore.isTreasurer || booking.memberId === authStore.user?.memberId" 
                         @click="confirmDelete(booking.id)" 
                         class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-medium transition-all duration-200 hover:shadow-md" 
                         title="Hủy đặt sân">
@@ -241,10 +241,12 @@ import { useAuthStore } from '@/stores/auth';
 import { format, parseISO } from 'date-fns';
 import { useToast } from 'vue-toastification';
 import axiosClient from '@/api/axiosClient';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const bookingStore = useBookingStore();
 const authStore = useAuthStore();
 const toast = useToast();
+const { confirmDelete: confirmDeleteDialog } = useConfirmDialog();
 
 const searchQuery = ref('');
 const filters = ref({
@@ -294,15 +296,29 @@ const estimatedPrice = computed(() => {
   return court ? court.pricePerHour * createForm.value.duration : 0;
 });
 
+const getMemberName = (booking) => {
+  if (booking.memberName) return booking.memberName;
+  const member = members.value.find(m => m.id === booking.memberId);
+  return member?.fullName || 'N/A';
+};
+
+const getCourtName = (booking) => {
+  if (booking.courtName) return booking.courtName;
+  const court = courts.value.find(c => c.id === booking.courtId);
+  return court?.name || 'N/A';
+};
+
 const filteredBookings = computed(() => {
   let result = bookings.value;
 
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
-    result = result.filter(b => 
-      b.memberName?.toLowerCase().includes(query) ||
-      b.courtName?.toLowerCase().includes(query)
-    );
+    result = result.filter(b => {
+      const memberName = getMemberName(b);
+      const courtName = getCourtName(b);
+      return memberName?.toLowerCase().includes(query) ||
+             courtName?.toLowerCase().includes(query);
+    });
   }
 
   if (filters.value.courtId !== null) {
@@ -359,9 +375,7 @@ const fetchMembers = async () => {
 onMounted(() => {
   fetchBookings();
   fetchCourts();
-  if (authStore.isAdmin) {
-    fetchMembers();
-  }
+  fetchMembers(); // Always fetch members to display names
 });
 
 const handleCreate = async () => {
@@ -443,7 +457,11 @@ const handleUpdate = async () => {
 };
 
 const confirmDelete = async (bookingId) => {
-  if (confirm('Bạn có chắc chắn muốn hủy đặt sân này?')) {
+  const confirmed = await confirmDeleteDialog('Bạn có chắc chắn muốn hủy đặt sân này?', {
+    title: 'Xác nhận hủy đặt sân',
+    confirmText: 'Hủy đặt sân'
+  });
+  if (confirmed) {
     try {
       const response = await axiosClient.delete(`/bookings/${bookingId}`);
       if (response.data.success) {

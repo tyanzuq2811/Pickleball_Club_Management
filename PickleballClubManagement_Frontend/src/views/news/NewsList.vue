@@ -242,9 +242,13 @@
 import { ref, onMounted, computed } from 'vue'
 import { useNewsStore } from '@/stores/news'
 import { useAuthStore } from '@/stores/auth'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
+import { useToast } from 'vue-toastification'
 
 const newsStore = useNewsStore()
 const authStore = useAuthStore()
+const { confirmDelete: confirmDeleteDialog } = useConfirmDialog()
+const toast = useToast()
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
@@ -315,28 +319,29 @@ const editNews = (news) => {
 const pinNews = async (id) => {
   const result = await newsStore.pinNews(id)
   if (result.success) {
-    alert('Ghim tin thành công!')
+    toast.success('Ghim tin thành công!')
   } else {
-    alert(`Lỗi: ${result.message}`)
+    toast.error(`Lỗi: ${result.message}`)
   }
 }
 
 const unpinNews = async (id) => {
   const result = await newsStore.unpinNews(id)
   if (result.success) {
-    alert('Bỏ ghim thành công!')
+    toast.success('Bỏ ghim thành công!')
   } else {
-    alert(`Lỗi: ${result.message}`)
+    toast.error(`Lỗi: ${result.message}`)
   }
 }
 
 const confirmDelete = async (news) => {
-  if (confirm(`Bạn có chắc muốn xóa tin "${news.title}"?`)) {
+  const confirmed = await confirmDeleteDialog(`Bạn có chắc muốn xóa tin "${news.title}"?`)
+  if (confirmed) {
     const result = await newsStore.deleteNews(news.id)
     if (result.success) {
-      alert('Xóa tin thành công!')
+      toast.success('Xóa tin thành công!')
     } else {
-      alert(`Lỗi: ${result.message}`)
+      toast.error(`Lỗi: ${result.message}`)
     }
   }
 }
@@ -345,18 +350,18 @@ const handleSubmit = async () => {
   if (showCreateModal.value) {
     const result = await newsStore.createNews(formData.value)
     if (result.success) {
-      alert('Thêm tin thành công!')
+      toast.success('Thêm tin thành công!')
       closeModal()
     } else {
-      alert(`Lỗi: ${result.message}`)
+      toast.error(`Lỗi: ${result.message}`)
     }
   } else {
     const result = await newsStore.updateNews(selectedNews.value.id, formData.value)
     if (result.success) {
-      alert('Cập nhật tin thành công!')
+      toast.success('Cập nhật tin thành công!')
       closeModal()
     } else {
-      alert(`Lỗi: ${result.message}`)
+      toast.error(`Lỗi: ${result.message}`)
     }
   }
 }

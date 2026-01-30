@@ -8,6 +8,7 @@ import BookingManagement from '@/views/bookings/BookingManagement.vue'
 import TournamentList from '@/views/tournaments/TournamentList.vue'
 import TournamentBracket from '@/views/tournaments/TournamentBracket.vue'
 import MyWallet from '@/views/wallet/MyWallet.vue'
+import WalletManagement from '@/views/wallet/WalletManagement.vue'
 import TransactionManagement from '@/views/treasury/TransactionManagement.vue'
 import MatchList from '@/views/referee/MatchList.vue'
 import MatchManagement from '@/views/referee/MatchManagement.vue'
@@ -65,19 +66,25 @@ const router = createRouter({
           path: 'tournaments',
           name: 'tournaments',
           component: TournamentList,
-          meta: { roles: ['Member'] }
+          meta: { roles: ['Member', 'Referee', 'Admin'] }
         },
         {
           path: 'tournaments/:id/bracket',
           name: 'tournament-bracket',
           component: TournamentBracket,
-          meta: { roles: ['Member'] }
+          meta: { roles: ['Member', 'Referee', 'Admin'] }
         },
         {
           path: 'wallet',
           name: 'wallet',
           component: MyWallet,
           meta: { roles: ['Member'] }
+        },
+        {
+          path: 'wallet/manage',
+          name: 'wallet-manage',
+          component: WalletManagement,
+          meta: { roles: ['Admin', 'Treasurer'] }
         },
         {
           path: 'treasury',

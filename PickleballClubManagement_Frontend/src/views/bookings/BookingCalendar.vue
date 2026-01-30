@@ -219,10 +219,12 @@ import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '@heroicons/vue/24/o
 import { startOfWeek, addDays, format, isSameDay, addHours, startOfDay } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useToast } from 'vue-toastification';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import AvailableSlots from './AvailableSlots.vue';
 
 const bookingStore = useBookingStore();
 const toast = useToast();
+const { confirm: confirmDialog } = useConfirmDialog();
 const currentDate = ref(new Date());
 const selectedCourtId = ref(null);
 const showRecurringModal = ref(false);
@@ -310,8 +312,8 @@ const formatStatus = (status) => {
 const handleSlotClick = async (date, hour) => {
   if (getBooking(date, hour)) return; // Đã có booking
 
-  const confirm = window.confirm(`Bạn muốn đặt sân lúc ${hour}:00 ngày ${format(date, 'dd/MM')}?`);
-  if (confirm) {
+  const confirmed = await confirmDialog(`Bạn muốn đặt sân lúc ${hour}:00 ngày ${format(date, 'dd/MM')}?`, { title: 'Đặt sân', type: 'info' });
+  if (confirmed) {
     const startTime = addHours(startOfDay(date), hour);
     const endTime = addHours(startTime, 1); // Mặc định 1 tiếng
 
@@ -337,7 +339,7 @@ const handleSlotClick = async (date, hour) => {
 
 const handleRecurringBooking = async () => {
   if (recurringData.value.daysOfWeek.length === 0) {
-    alert('Vui lòng chọn ít nhất một ngày trong tuần');
+    toast.warning('Vui lòng chọn ít nhất một ngày trong tuần');
     return;
   }
 
@@ -362,7 +364,8 @@ const viewBookingDetail = (booking) => {
 };
 
 const cancelBooking = async () => {
-  if (confirm('Xác nhận hủy booking này?')) {
+  const confirmed = await confirmDialog('Xác nhận hủy booking này?', { title: 'Hủy booking', type: 'warning' });
+  if (confirmed) {
     const success = await bookingStore.cancelBooking(selectedBooking.value.id);
     if (success) {
       toast.success('Hủy booking thành công!');

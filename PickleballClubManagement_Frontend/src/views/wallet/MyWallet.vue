@@ -199,9 +199,11 @@ import { useWalletStore } from '@/stores/wallet';
 import { useAuthStore } from '@/stores/auth';
 import { CreditCardIcon } from '@heroicons/vue/24/outline';
 import { format } from 'date-fns';
+import { useToast } from 'vue-toastification';
 
 const walletStore = useWalletStore();
 const authStore = useAuthStore();
+const toast = useToast();
 const showDepositModal = ref(false);
 const depositAmount = ref(100000);
 const selectedPayment = ref('bank');
@@ -257,7 +259,7 @@ onMounted(() => {
 
 const handleDeposit = async () => {
   if (depositAmount.value < 10000) {
-    alert('Số tiền nạp tối thiểu là 10,000 VNĐ');
+    toast.warning('Số tiền nạp tối thiểu là 10,000 VNĐ');
     return;
   }
   

@@ -159,9 +159,13 @@
 import { ref, onMounted, computed } from 'vue'
 import { useCourtStore } from '@/stores/court'
 import { useAuthStore } from '@/stores/auth'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
+import { useToast } from 'vue-toastification'
 
 const courtStore = useCourtStore()
 const authStore = useAuthStore()
+const { confirm: confirmDialog, confirmDelete: confirmDeleteDialog } = useConfirmDialog()
+const toast = useToast()
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
@@ -211,12 +215,13 @@ const editCourt = (court) => {
 }
 
 const confirmDelete = async (court) => {
-  if (confirm(`Bạn có chắc muốn xóa sân "${court.name}"?`)) {
+  const confirmed = await confirmDeleteDialog(`Bạn có chắc muốn xóa sân "${court.name}"?`)
+  if (confirmed) {
     const result = await courtStore.deleteCourt(court.id)
     if (result.success) {
-      alert('Xóa sân thành công!')
+      toast.success('Xóa sân thành công!')
     } else {
-      alert(`Lỗi: ${result.message}`)
+      toast.error(`Lỗi: ${result.message}`)
     }
   }
 }
@@ -225,18 +230,18 @@ const handleSubmit = async () => {
   if (showCreateModal.value) {
     const result = await courtStore.createCourt(formData.value)
     if (result.success) {
-      alert('Thêm sân thành công!')
+      toast.success('Thêm sân thành công!')
       closeModal()
     } else {
-      alert(`Lỗi: ${result.message}`)
+      toast.error(`Lỗi: ${result.message}`)
     }
   } else {
     const result = await courtStore.updateCourt(selectedCourt.value.id, formData.value)
     if (result.success) {
-      alert('Cập nhật sân thành công!')
+      toast.success('Cập nhật sân thành công!')
       closeModal()
     } else {
-      alert(`Lỗi: ${result.message}`)
+      toast.error(`Lỗi: ${result.message}`)
     }
   }
 }

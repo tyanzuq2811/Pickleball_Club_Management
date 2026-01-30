@@ -168,11 +168,13 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from 'vue-toastification';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { format, parseISO, differenceInSeconds } from 'date-fns';
 import axiosClient from '@/api/axiosClient';
 
 const authStore = useAuthStore();
 const toast = useToast();
+const { confirm: confirmDialog } = useConfirmDialog();
 
 const bookings = ref([]);
 const countdowns = ref({});
@@ -279,7 +281,8 @@ const confirmPayment = async () => {
 };
 
 const cancelBooking = async (bookingId) => {
-  if (confirm('Xác nhận hủy booking này?')) {
+  const confirmed = await confirmDialog('Xác nhận hủy booking này?', { title: 'Hủy booking', type: 'warning' });
+  if (confirmed) {
     try {
       const response = await axiosClient.delete(`/bookings/${bookingId}`);
       if (response.data.success) {

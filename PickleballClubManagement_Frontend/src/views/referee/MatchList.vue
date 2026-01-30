@@ -110,9 +110,11 @@
 import { ref, onMounted } from 'vue';
 import { useMatchStore } from '@/stores/match';
 import { useToast } from 'vue-toastification';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 const matchStore = useMatchStore();
 const toast = useToast();
+const { confirm: confirmDialog } = useConfirmDialog();
 const showScoreModal = ref(false);
 const selectedMatch = ref(null);
 const scoreForm = ref({
@@ -184,7 +186,8 @@ const saveScores = async () => {
 };
 
 const finishMatch = async (match) => {
-  if (confirm(`Xác nhận kết thúc trận đấu với tỉ số ${match.team1Score} - ${match.team2Score}?`)) {
+  const confirmed = await confirmDialog(`Xác nhận kết thúc trận đấu với tỉ số ${match.team1Score} - ${match.team2Score}?`, { title: 'Kết thúc trận đấu', type: 'success' });
+  if (confirmed) {
     const success = await matchStore.finishMatch(match.id);
     if (success) {
       toast.success('Trận đấu đã kết thúc! ELO đã được cập nhật.');
